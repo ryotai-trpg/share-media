@@ -1,25 +1,33 @@
 {
-  "name": "share-media",
-  "version": "1.0.0",
-  "description": "A module to easily share media to players",
-  "scripts": {
-    "gulp": "gulp",
-    "build": "gulp build"
+  "name": "share-meddia",
+  "author": {
+    "name": "Maxime",
+    "url": "https://github.com/mech-tools",
+    "discord": "Maxime1562"
   },
-  "browserslist": [
-    "last 3 versions"
-  ],
-  "author": "Maxime",
-  "license": "MIT",
-  "private": true,
   "devDependencies": {
-    "dart-sass": "^1.25.0",
-    "gulp": "^4.0.2",
-    "gulp-autoprefixer": "^7.0.1",
-    "gulp-sass": "^5.1.0",
-    "gulp-sourcemaps": "^2.6.5",
-    "vinyl-named": "^1.1.0",
-    "webpack": "^5.88.2",
-    "webpack-stream": "^7.0.0"
-  }
+    "@eslint/js": "^9.28.0",
+    "@homer0/prettier-plugin-jsdoc": "^10.0.0",
+    "bun": "^1.2.15",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.28.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-jsdoc": "^50.7.1",
+    "globals": "^16.2.0",
+    "prettier": "^3.5.3"
+  },
+  "engines": {
+    "bun": "1.2.x"
+  },
+  "license": "AGPL-3.0",
+  "private": true,
+  "scripts": {
+    "dev:js": "bun build --outdir=. --entry-naming=share-media.mjs --sourcemap=linked --watch ./scripts/module.mjs",
+    "dev:css": "bun build --outdir=. --entry-naming=share-media.css --watch ./styles/module.css",
+    "dev": "concurrently -k -n 'MJS,CSS' -c 'yellow,blue' 'bun run dev:js' 'bun run dev:css'",
+    "prod:js": "bun build --outdir=. --entry-naming=share-media.mjs ./scripts/module.mjs",
+    "prod:css": "bun build --outdir=. --entry-naming=share-media.css ./styles/module.css",
+    "prod": "bun run prod:js && bun run prod:css"
+  },
+  "type": "module"
 }

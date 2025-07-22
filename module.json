@@ -1,36 +1,33 @@
 {
   "id": "share-media",
   "title": "Share Media",
-  "description": "A module to easily share media to players",
-  "version": "",
-  "library": "false",
+  "description": "This module allows GMs to quickly share media.",
+  "version": "#{VERSION}#",
+  "manifest": "#{MANIFEST}#",
+  "download": "#{DOWNLOAD}#",
+  "url": "https://github.com/mech-tools/share-media",
+  "readme": "https://github.com/mech-tools/share-media/blob/master/README.md",
+  "changelog": "https://github.com/mech-tools/share-media/releases",
+  "bugs": "https://github.com/mech-tools/share-media/issues",
   "compatibility": {
-    "minimum": 12,
-    "verified": "12.331"
+    "minimum": "13",
+    "verified": "13",
+    "maximum": "13"
   },
   "authors": [
     {
       "name": "Maxime",
       "url": "https://github.com/mech-tools",
-      "discord": "Maxime#1562"
+      "discord": "Maxime1562"
     }
   ],
-  "relationships": {
-    "requires": [
-      {
-        "id": "socketlib",
-        "type": "module",
-        "manifest": "https://raw.githubusercontent.com/manuelVo/foundryvtt-socketlib/master/module.json",
-        "compatibility": {
-          "verified": "1.0.10"
-        }
-      }
-    ]
+  "esmodules": ["./share-media.mjs"],
+  "styles": ["./share-media.css"],
+  "documentTypes": {
+    "RegionBehavior": {
+      "ShareRegion": {}
+    }
   },
-  "socket": true,
-  "esmodules": ["/build/main.js"],
-  "scripts": [],
-  "styles": ["/build/main.css"],
   "languages": [
     {
       "lang": "en",
@@ -41,20 +38,13 @@
       "lang": "fr",
       "name": "Français",
       "path": "languages/fr.json"
-    },
-    {
-      "lang": "ja",
-      "name": "日本語",
-      "path": "languages/ja.json"
-    },
-    {
-      "lang": "fi",
-      "name": "Suomi",
-      "path": "languages/fi.json"
     }
   ],
-  "url": "",
-  "manifest": "",
-  "download": "",
-  "media": []
+  "flags": {
+    "hotReload": {
+      "extensions": ["css", "hbs", "json"],
+      "paths": ["share-media.css", "templates/", "languages/"]
+    }
+  },
+  "socket": true
 }

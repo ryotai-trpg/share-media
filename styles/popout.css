@@ -1,0 +1,29 @@
+@layer shm.layouts {
+  [id^="shm-popout-"] {
+    /* -------------------------------------------- */
+    /*  Adjustments needed to place the overlay
+    /* -------------------------------------------- */
+
+    figure {
+      justify-content: center;
+
+      .media-frame {
+        position: relative;
+
+        /*  Fix half-pixel shift with videos (induced by "object-fit: contain" on the video)  */
+        &:has(video) .darkness {
+          transform: scale(1.001);
+        }
+      }
+    }
+
+    /* -------------------------------------------- */
+    /*  Caption
+    /* -------------------------------------------- */
+
+    /* [TODO] Adjust color when popout theme is fixed */
+    figcaption {
+      color: light-dark(rgba(var(--shm-cream) / 1), rgba(var(--shm-cream) / 1));
+    }
+  }
+}

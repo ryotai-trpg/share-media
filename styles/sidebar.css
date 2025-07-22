@@ -1,0 +1,114 @@
+@layer shm.layouts {
+  #shm-media-sidebar,
+  #shm-media-sidebar-popout {
+    /* -------------------------------------------- */
+    /*  Containers
+    /* -------------------------------------------- */
+
+    .media-container {
+      position: relative;
+      overflow: hidden;
+
+      min-height: 75px;
+    }
+
+    .media-log {
+      &.scrolled {
+        mask-image: linear-gradient(to bottom, black 95%, transparent);
+      }
+    }
+
+    /* -------------------------------------------- */
+    /*  Media Item
+    /* -------------------------------------------- */
+
+    .media-item {
+      cursor: pointer;
+
+      position: relative;
+      min-height: 150px;
+
+      margin: 0.25rem;
+
+      /*  Applied just before a media is deleted  */
+      &.deleting {
+        min-height: 0;
+
+        .media-metadata,
+        .video-icon {
+          display: none;
+        }
+      }
+    }
+
+    /* -------------------------------------------- */
+    /*  Media
+    /* -------------------------------------------- */
+
+    img,
+    video {
+      pointer-events: none;
+
+      object-fit: cover;
+
+      border-radius: 3px;
+      transition: filter 0.25s;
+
+      /*  States  */
+      .media-item:hover & {
+        filter: brightness(1.1);
+      }
+    }
+
+    /* -------------------------------------------- */
+    /*  Metadata & actions
+    /* -------------------------------------------- */
+
+    .media-metadata {
+      z-index: 1;
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      gap: 0.25rem;
+    }
+
+    .gm-actions {
+      z-index: 1;
+      transition: opacity 0.25s;
+      flex-wrap: nowrap;
+      opacity: 0;
+      gap: 0.25rem;
+
+      /*  States  */
+      .media-item:hover & {
+        opacity: 1;
+      }
+    }
+
+    /* -------------------------------------------- */
+    /*  Others Buttons & Labels
+    /* -------------------------------------------- */
+
+    .loading {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translate(-50%);
+      flex-wrap: nowrap;
+
+      gap: 0.25rem;
+      padding: 0.5rem;
+
+      color: light-dark(rgba(var(--shm-charcoal) / 1), rgba(var(--shm-cream) / 1));
+      background-color: light-dark(rgba(var(--shm-white) / 0.6), rgba(var(--shm-purple) / 0.5));
+      white-space: nowrap;
+      border-radius: 4px;
+    }
+
+    .jump-to-bottom {
+      position: absolute;
+      left: 0.25rem;
+      bottom: 0.25rem;
+    }
+  }
+}

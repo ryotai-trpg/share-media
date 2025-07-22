@@ -1,0 +1,18 @@
+/*  Layer declarations  */
+@layer shm.colors, shm.common, shm.components, shm.layouts;
+
+/*  Colors  */
+@import "colors.css";
+
+/*  Common  */
+@import "common.css";
+
+/*  Components  */
+@import "components.css";
+
+/*  layouts  */
+@import "overlay.css";
+@import "popout.css";
+@import "fullscreen.css";
+@import "sidebar.css";
+@import "share.css";

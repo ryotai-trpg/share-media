@@ -1,7 +1,18 @@
+# Project related
+share-media.mjs
+share-media.mjs.map
+share-media.css
+
+# Node Modules
+node_modules/
+yarn.lock
+
+# Lock files
+package-lock.json
+
 # IDE
 .idea/
 .vs/
 
-# Node Modules
-node_modules/
-npm-debug.log
+# Finder (MacOS) folder config
+.DS_Store

@@ -1,0 +1,46 @@
+@layer shm.colors {
+  /* -------------------------------------------- */
+  /*  Color definitions
+  /* -------------------------------------------- */
+
+  /* Base color palette */
+  :root {
+    --shm-charcoal: 17 17 17;
+    --shm-cream: 231 209 177;
+    --shm-ivory: 247 243 232;
+    --shm-white: 255 255 255;
+    --shm-purple: 11 10 19;
+    --shm-orange: 201 89 63;
+    --shm-gray: 85 85 85;
+    --shm-warm-gray: 159 132 117;
+  }
+
+  /*  Color scheme definitions  */
+  :where(.shm) {
+    /* [NOTE] Can't merge the color scheme definitions as css prioprity will be messed up */
+    /* [TODO] remove "--buncss" variables when bun is fixed: https://github.com/oven-sh/bun/issues/20689 */
+    body.theme-dark & {
+      --buncss-light: ;
+      --buncss-dark: initial;
+      color-scheme: dark;
+    }
+
+    body.theme-light & {
+      --buncss-light: initial;
+      --buncss-dark: ;
+      color-scheme: light;
+    }
+
+    body .theme-dark & {
+      --buncss-light: ;
+      --buncss-dark: initial;
+      color-scheme: dark;
+    }
+
+    body .theme-light & {
+      --buncss-light: initial;
+      --buncss-dark: ;
+      color-scheme: light;
+    }
+  }
+}

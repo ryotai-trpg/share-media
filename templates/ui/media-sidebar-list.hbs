@@ -1,0 +1,44 @@
+{{!--  Target users Tooltip  --}}
+{{#*inline "targetUsersTooltip"}}
+    {{~#if users.length}}
+        {{~#each users as |user|}}
+            <div class="flexrow"><i class="shm padded pip" style="--pip-color: {{user.color.css}}"></i>{{user.name}}
+            </div>
+        {{~/each}}
+    {{~else}}
+        {{localize "share-media.ui.sidebar.gm-actions.targetUsers.no-players"}}
+    {{~/if}}
+{{/inline}}
+
+{{!--  Actual Template  --}}
+{{#each mediaList as |media|}}
+    <li class="shm flexrow media-item" data-media-id="{{media.id}}" data-action="showMedia">
+        {{!--  Medatada  --}}
+        <span class="flexrow media-metadata">
+
+            {{!--  Gamemaster Actions  --}}
+            {{~#if @root.isGM}}
+                <div class="flexrow gm-actions">
+                    <button class="tiny secondary icon {{@root.icons.shareAgain}}" data-action="shareMedia"
+                        data-tooltip="share-media.ui.sidebar.gm-actions.share"
+                        data-tooltip-direction="UP"></button></button>
+                    <button class="tiny secondary icon {{@root.icons.clear}}" data-action="clearMedia"
+                        data-tooltip="Delete" data-tooltip-direction="UP"></button>
+                </div>
+            {{~/if}}
+
+            {{!--  Users Information  --}}
+            {{~#if @root.isGM}}
+                <i class="badge {{ifThen media.targetUsers.length @root.icons.usersInfo @root.icons.noUsers}}"
+                    data-tooltip-direction="UP"
+                    data-tooltip-html='{{> "targetUsersTooltip" users=media.targetUsers}}'></i>
+            {{~/if}}
+
+            {{!--  Timestamp  --}}
+            <time class="padded badge media-timestamp">{{media.timestamp}}</time>
+        </span>
+
+        {{!--  Media  --}}
+        {{> "share-media.media" passthrough=true src=media.src lazyLoad=true metadata=true isVideo=media.isVideo videoIcon=@root.icons.play}}
+    </li>
+{{/each}}

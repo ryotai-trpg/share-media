@@ -1,0 +1,18 @@
+<figure class="flexcol">
+    {{!-- "media-frame" is needed to adjust the size of the darkness overlay  --}}
+    <div class="media-frame">
+        {{!--  Darkness Overlay  --}}
+        {{~#if darkness}}
+            <div class="darkness" style="--darkness-color: {{darknessColor}}; opacity: {{initialOpacity}}">
+            </div>
+        {{~/if}}
+
+        {{!--  Media  --}}
+        {{> "share-media.media" passthrough=true src=media isVideo=isVideo autoplay=true}}
+    </div>
+
+    {{!--  Caption  --}}
+    {{#if caption}}
+        <figcaption>{{caption}}</figcaption>
+    {{/if}}
+</figure>

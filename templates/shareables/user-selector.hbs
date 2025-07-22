@@ -1,0 +1,29 @@
+<user-selector>
+    <p class="hint">{{localize "share-media.shareables.selector.user.description"}}</p>
+
+    {{!-- Blacklist --}}
+    <div class="scrollable flexcol">
+        {{~#each users as |user|}}
+            <div class="form-group {{~#if user.isGM}} disabled{{~/if}}">
+                {{!-- Label --}}
+                <label for="{{user.id}}" class="flexrow">
+                    <i class="shm padded pip" style="--pip-color: {{user.color.css}}"></i>{{user.name}}
+                </label>
+
+                {{!-- Field --}}
+                <div class="form-fields">
+                    <input type="checkbox" name="{{user.id}}" id="{{user.id}}"
+                        {{~#if user.isGM}} readonly checked{{~/if}}>
+                </div>
+            </div>
+        {{~/each}}
+    </div>
+
+    {{!-- Footer --}}
+    <footer class="form-footer">
+        <button type="submit">
+            <i class="{{icons.validate}}"></i>
+            {{localize "share-media.base.validate"}}
+        </button>
+    </footer>
+</user-selector>

@@ -1,0 +1,38 @@
+<default-media-settings>
+    <p class="hint">{{localize (concat "share-media.settings." description)}}</p>
+
+    {{!-- Settings --}}
+    <div class="scrollable flexcol tab">
+        {{~#each defaultMediaSettings as |setting category|}}
+            <fieldset>
+                <legend>{{localize (concat "share-media.ui.settings.categories." category)}}</legend>
+                {{~#each setting as |checked name|}}
+                    <div class="form-group">
+                        {{!-- Label --}}
+                        <label for="{{category}}.{{name}}">
+                            <i class="{{lookup @root.icons name}}"></i>
+                            {{localize (concat "share-media.ui.settings." name ".label")}}
+                        </label>
+
+                        {{!-- Field --}}
+                        <div class="shm form-fields">
+                            <input type="checkbox" name="{{category}}.{{name}}" id="{{category}}.{{name}}"
+                                {{~#if checked}} checked {{~/if}}>
+                        </div>
+
+                        {{!-- Hint --}}
+                        <p class="hint">{{localize (concat "share-media.ui.settings." name ".description")}}</p>
+                    </div>
+                {{~/each}}
+            </fieldset>
+        {{~/each}}
+    </div>
+
+    {{!-- Footer --}}
+    <footer class="form-footer">
+        <button type="submit">
+            <i class="{{icons.validate}}"></i>
+            {{localize "share-media.base.validate"}}
+        </button>
+    </footer>
+</default-media-settings>

@@ -1,0 +1,64 @@
+@layer shm.common {
+  /* -------------------------------------------- */
+  /*  Media partial
+  /* -------------------------------------------- */
+
+  .shm .media,
+  .media.shm {
+    /*  container  */
+    position: relative;
+
+    /*  Variants  */
+    &.passthrough {
+      display: contents;
+    }
+
+    /*  Media element  */
+    img,
+    video {
+      /*  Reset CSS  */
+      margin: 0;
+      padding: 0;
+      border: unset;
+      box-shadow: unset;
+      clear: unset;
+      max-width: unset;
+
+      /*  Actual properties  */
+      display: block flow;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /*  Special icon for video as it can't have pseudo elements  */
+    video + .video-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+
+      font-size: var(--font-size-64);
+      color: rgba(var(--shm-cream) / 0.8);
+    }
+  }
+
+  /* -------------------------------------------- */
+  /*  Darkness overlay
+  /* -------------------------------------------- */
+
+  .shm .darkness,
+  .shm.darkness {
+    /*  CSS variables  */
+    --darkness-color: transparent;
+
+    /*  Actual properties  */
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--darkness-color);
+    mix-blend-mode: multiply;
+  }
+}
