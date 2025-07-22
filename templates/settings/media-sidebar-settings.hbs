@@ -1,0 +1,66 @@
+<media-history-sidebar-settings>
+    <p class="hint">{{localize (concat "share-media.settings." description)}}</p>
+
+    {{!-- Settings --}}
+    <div class="scrollable flexcol tab">
+        <fieldset>
+            <legend>{{localize "share-media.settings.mediaSidebarSettings.options.general.label"}}</legend>
+            {{!-- Enabled --}}
+            <div class="form-group">
+                <label for="enabled">
+                    {{localize "share-media.settings.mediaSidebarSettings.options.general.enabled.label"}}
+                </label>
+                <div class="shm form-fields">
+                    <input type="checkbox" name="enabled" id="enabled"
+                        {{~#if mediaSidebarSettings.enabled}} checked {{~/if}}>
+                </div>
+                <p class="hint">
+                    {{localize "share-media.settings.mediaSidebarSettings.options.general.enabled.hint"}}
+                </p>
+            </div>
+
+            {{!-- gmOnly --}}
+            <div class="form-group">
+                <label for="gmOnly">
+                    {{localize "share-media.settings.mediaSidebarSettings.options.general.gmOnly.label"}}
+                </label>
+                <div class="shm form-fields">
+                    <input type="checkbox" name="gmOnly" id="gmOnly"
+                        {{~#if mediaSidebarSettings.gmOnly}} checked {{~/if}}>
+                </div>
+                <p class="hint">
+                    {{localize "share-media.settings.mediaSidebarSettings.options.general.gmOnly.hint"}}
+                </p>
+            </div>
+        </fieldset>
+
+        {{!-- Layers --}}
+        <fieldset>
+            <legend>{{localize "share-media.settings.mediaSidebarSettings.options.layers.label"}}</legend>
+            <p class="hint">{{localize "share-media.settings.mediaSidebarSettings.options.layers.hint"}}</p>
+
+            {{~#each mediaSidebarSettings.layers as |value layer|}}
+                <div class="form-group">
+                    <label for="layers.{{layer}}">
+                        {{localize (concat "share-media.settings.mediaSidebarSettings.options.layers." layer ".label")}}
+                    </label>
+                    <div class="shm form-fields">
+                        <input type="checkbox" name="layers.{{layer}}" id="layers.{{layer}}"
+                            {{~#if value}} checked {{~/if}}>
+                    </div>
+                    <p class="hint">
+                        {{localize (concat "share-media.settings.mediaSidebarSettings.options.layers." layer ".hint")}}
+                    </p>
+                </div>
+            {{~/each}}
+        </fieldset>
+    </div>
+
+    {{!-- Footer --}}
+    <footer class="form-footer">
+        <button type="submit">
+            <i class="{{icons.validate}}"></i>
+            {{localize "share-media.base.validate"}}
+        </button>
+    </footer>
+</media-history-sidebar-settings>

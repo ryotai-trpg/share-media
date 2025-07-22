@@ -1,0 +1,29 @@
+<media-sidebar>
+    {{!--  Sidebar Header  --}}
+    {{#if user.isGM}}
+        <header class="directory-header flexcol">
+            <div class="header-actions action-buttons flexrow">
+                <button type="button" data-action="clearHistory">
+                    <i class="{{icons.clear}}"></i>
+                    <span>{{localize "share-media.ui.sidebar.clear.history.label"}}</span>
+                </button>
+            </div>
+        </header>
+    {{/if}}
+
+    {{!--  Sidebar Media List  --}}
+    <div class="flexcol flex1 media-container">
+        {{!--  Media Log  --}}
+        <ol class="plain directory-list media-log"></ol>
+
+        {{!--  Loading  --}}
+        <span class="flexrow shm loading" hidden>
+            <i class="{{icons.loading}}"></i> {{localize "share-media.ui.sidebar.loading"}}
+        </span>
+
+        {{!--  Jump to Bottom  --}}
+        <button type="button" class="jump-to-bottom ui-control icon {{icons.jumpToBottom}}"
+            data-action="jumpToBottom"
+            data-tooltip="{{localize "CHAT.JumpToBottom"}}" data-tooltip-direction="UP" hidden></button>
+    </div>
+</media-sidebar>

@@ -1,0 +1,560 @@
+const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
+const { isSubclass, getProperty, mergeObject } = foundry.utils;
+
+/**
+ * Application responsible for interacting with shareable media.
+ * @extends ApplicationV2
+ * @mixes HandlebarsApplication
+ */
+export default class MediaOverlay extends HandlebarsApplicationMixin(ApplicationV2) {
+  /** @inheritdoc */
+  constructor(options = {}) {
+    // Only Gamemasters are allowed to show the media overlay
+    if (!game.users.current.isGM) return {};
+
+    if (game.modules.shareMedia.ui.overlay)
+      throw new Error("You may not re-construct the singleton MediaOverlay.");
+
+    super(options);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Reference to the target HTML element.
+   * @type {HTMLElement | null}
+   */
+  targetElement = null;
+
+  /**
+   * Reference to the target application linked to the target HTML element.
+   * @type {ApplicationV1 | ApplicationV2 | null}
+   */
+  targetApplication = null;
+
+  /**
+   * Reference to the target HTML context.
+   * @type {(typeof CONFIG.shareMedia.CONST.MEDIA_HOOKS)[number]["htmlContext"] | null}
+   */
+  htmlContext = null;
+
+  /**
+   * An amount of margin which is used to offset the overlay from its anchored element.
+   * @type {number}
+   */
+  static OVERLAY_MARGIN_PX = 5;
+
+  /** @inheritdoc */
+  static DEFAULT_OPTIONS = {
+    tag: "aside",
+    id: "shm-overlay",
+    classes: ["shm"],
+    window: {
+      positioned: false,
+      frame: false,
+    },
+    actions: {
+      configureSetting: MediaOverlay.#onConfigureSetting,
+      share: MediaOverlay.#onShare,
+    },
+  };
+
+  /** @override */
+  static PARTS = {
+    overlay: { template: "modules/share-media/templates/ui/media-overlay.hbs", root: true },
+  };
+
+  /**
+   * Is currently active.
+   * @type {boolean}
+   */
+  #active = false;
+
+  /**
+   * Current animation end listener to be able to remove it.
+   * @type {(() => void) | null}
+   */
+  #onHideListener = null;
+
+  /**
+   * Flag key stored at the targetApplication level.
+   * @type {string}
+   */
+  #settingsKey = "settings";
+
+  /* -------------------------------------------- */
+  /*  Getters
+  /* -------------------------------------------- */
+
+  /**
+   * Check if the application can be rendered safely, meaning "this.element" exists and is connected to the DOM.
+   * @type {boolean}
+   */
+  get isNotRenderable() {
+    return this.rendered && this.element && !this.element.isConnected;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Check if the application is alive, meaning all required elements are set.
+   * @type {boolean}
+   */
+  get isAlive() {
+    return this.targetElement && this.targetApplication && this.element && this.element.isConnected;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Get the source URL of "this.targetElement"
+   * @type {string | null}
+   */
+  get targetElementSource() {
+    if (!this.targetElement) return null;
+    return game.modules.shareMedia.utils.getMediaSource(this.targetElement);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Get the escaped source URL of "this.targetElement"
+   * @type {string | null}
+   */
+  get targetElementEscapedSource() {
+    if (!this.targetElement) return null;
+    return game.modules.shareMedia.utils.escapeSource(this.targetElementSource);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Get the settings for the "this.targetElement", retrieved from the "this.targetApplication" flags.
+   * @type {{
+   *   key: string;
+   *   settings: Partial<typeof CONFIG.shareMedia.CONST.MEDIA_SETTINGS>;
+   * }}
+   */
+  get targetElementSettings() {
+    if (!this.targetElement || !this.targetApplication) return { key: "", settings: {} };
+    const flag = this.targetApplication.document.getFlag("share-media", this.#settingsKey) ?? {};
+    const key = this.targetElementEscapedSource;
+    const storedSettings = getProperty(flag, key) ?? {};
+
+    // Merge with default settings
+    const defaultMediaSettings = game.modules.shareMedia.settings.get(
+      CONFIG.shareMedia.CONST.MODULE_SETTINGS.defaultMediaSettings,
+    );
+    const settings = mergeObject(defaultMediaSettings, storedSettings, { inplace: false });
+
+    return { key, settings };
+  }
+
+  /* -------------------------------------------- */
+  /*  Overlay actions
+  /* -------------------------------------------- */
+
+  /**
+   * Activate the overlay on an HTML element, displaying interactions based on the Element type.
+   * @param {HTMLElement} element
+   * The element on which the overlay is rendered.
+   * @param {ApplicationV1 | ApplicationV2} application
+   * The application linked to the element.
+   * @param {(typeof CONFIG.shareMedia.CONST.MEDIA_HOOKS)[number]["htmlContext"]} [context]
+   * An HTML context of valid containers for the element.
+   * @returns {Promise<this>}
+   */
+  async activate(element, application, context) {
+    this.targetElement = element;
+    this.targetApplication = application;
+    if (context) this.htmlContext = context;
+
+    // Ensure that a previously rendered application can be rerendered
+    // [NOTE] this is not an infinite loop because "this.close()"
+    // will ensure that "this.isNotRenderable" returns "true"
+    if (this.isNotRenderable) {
+      await this.close({ animate: false });
+      return await this.activate(element, application, context);
+    }
+
+    // Rerender the application
+    await this.render(true);
+
+    // Show the overlay with an animation
+    await this.#show();
+
+    Hooks.callAll("shareMedia.activateOverlay", this, element, application, context);
+    return this;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Deactivate the overlay, nullifying all stored data.
+   * Also attempt to move the element to the body so it doesn't have to be reconstructed again.
+   * @returns {Promise<this>}
+   */
+  async deactivate() {
+    // If the current state of the application doesn't align
+    if (!this.isAlive) {
+      return await this.close({ animate: false });
+    }
+
+    // Hide the overlay with an animation
+    await this.#hide();
+
+    Hooks.callAll("shareMedia.deactivateOverlay", this);
+    return this;
+  }
+
+  /* -------------------------------------------- */
+  /*  Show/hide flow
+  /* -------------------------------------------- */
+
+  /**
+   * Show the overlay with an animation.
+   * This consists of adding an "active" class displaying the element ("display: block") then add a class handling the
+   * animation ("opacity: 1").
+   * @returns {Promise<void>}
+   */
+  async #show() {
+    if (this.#active || !this.isAlive) return;
+
+    // clear any hiding process
+    this.#clearHidingListener();
+    this.#active = true;
+
+    // Add css classes one step at the time
+    this.element.classList.add("active");
+    await game.modules.shareMedia.utils.nextAnimationFrames();
+    this.element.classList.add("show");
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Hide the overlay with an animation.
+   * This consists of removing the animation class "show" then add an event listener to remove the class "active".
+   * That event listener can be stopped if needed to show again before the animation is complete.
+   * @returns {Promise<void>}
+   */
+  async #hide() {
+    if (!this.#active || !this.isAlive) return;
+    this.#active = false;
+
+    // Reset state, we don't need it anymore
+    // and "transitionend" might never finish
+    this._resetState();
+
+    // Initiate animation
+    this.element.classList.remove("show");
+
+    // Attach an event listener that will remove the "active" css class
+    this.#onHideListener = this.#createOnHideListener();
+    this.element.addEventListener("transitionend", this.#onHideListener, { once: true });
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Create a function that will hide and move "this.element" to the body if able.
+   * @returns {() => void}
+   */
+  #createOnHideListener() {
+    return () => {
+      if (!this.#active && this.element) {
+        // Remove the "active class"
+        this.element.classList.remove("active");
+
+        // Move the element to the body
+        document.body.append(this.element);
+      }
+
+      // Reset state and clear references
+      this._resetAll();
+    };
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Clear any pending animation end listener.
+   */
+  #clearHidingListener() {
+    if (this.#onHideListener) {
+      this.element?.removeEventListener("transitionend", this.#onHideListener);
+      this.#onHideListener = null;
+    }
+  }
+
+  /* -------------------------------------------- */
+  /*  Context
+  /* -------------------------------------------- */
+
+  /** @inheritdoc */
+  async _prepareContext(options) {
+    return {
+      ...(await super._prepareContext(options)),
+      icons: CONFIG.shareMedia.CONST.ICONS,
+      mediaActions: this.#prepareActions(),
+      mediaSettings: this.#prepareSettings(),
+    };
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Prepare the list of media actions to be rendered.
+   * @returns {{
+   *   [K in keyof typeof CONFIG.shareMedia.CONST.MEDIA_ACTIONS]: Array<
+   *     (typeof CONFIG.shareMedia.CONST.MEDIA_ACTIONS)[K][number] & {
+   *       label: string;
+   *       description: string;
+   *       icon: string;
+   *     }
+   *   >;
+   * }}
+   */
+  #prepareActions() {
+    const actions = CONFIG.shareMedia.CONST.MEDIA_ACTIONS;
+    return Object.entries(actions).reduce((acc, [mode, items]) => {
+      acc[mode] = items.map((item) => {
+        item.label = `${item.i18nKey}.label`;
+        item.description = `${item.i18nKey}.description`;
+        item.icon = item.i18nKey;
+        return item;
+      });
+      return acc;
+    }, {});
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Prepare the list of media settings to be rendered.
+   * @returns {{
+   *   [K in keyof typeof CONFIG.shareMedia.CONST.MEDIA_SETTINGS]: {
+   *     category: keyof typeof CONFIG.shareMedia.CONST.MEDIA_SETTINGS;
+   *     label: string;
+   *     isVisible: boolean;
+   *     options: {
+   *       name: keyof (typeof CONFIG.shareMedia.CONST.MEDIA_SETTINGS)[K];
+   *       value: boolean;
+   *       icon: string;
+   *       label: string;
+   *       description: string;
+   *     };
+   *   };
+   * }}
+   * @throws {Error} An error in case of a missing validator.
+   */
+  #prepareSettings() {
+    const settings = this.targetElementSettings.settings;
+    return Object.entries(settings).reduce((acc, [category, options]) => {
+      // Validate the visibility of a setting category depending on the media type
+      const validator = CONFIG.shareMedia.CONST.MEDIA_SETTINGS_VALIDATORS[category];
+      if (!validator) throw new Error(`Missing validator for setting "${category}".`);
+      const isVisible = validator(this.targetElementSource);
+
+      acc[category] = {
+        category,
+        label: `categories.${category}`,
+        isVisible,
+      };
+
+      acc[category].options = Object.entries(options).map(([name, value]) => ({
+        name,
+        value,
+        icon: name,
+        label: `${name}.label`,
+        description: `${name}.description`,
+      }));
+
+      return acc;
+    }, {});
+  }
+
+  /* -------------------------------------------- */
+  /*  Action Event Handlers
+  /* -------------------------------------------- */
+
+  /**
+   * Handle the settings of the media.
+   * These are stored at the application document level (flags).
+   * @param {PointerEvent} _event  The triggering event.
+   * @param {HTMLElement}  target  The targeted DOM element.clau.
+   * @returns {Promise<void>}
+   * @this {MediaOverlay}
+   */
+  static async #onConfigureSetting(_event, target) {
+    if (!this.targetElement || !this.targetApplication) return;
+    const dataset = target.dataset;
+    const { key, settings } = this.targetElementSettings;
+    const setting = getProperty(settings, `${dataset.category}.${dataset.setting}`) ?? false;
+
+    // [NOTE] Not using "setFlag" as it will force a "render" of "this.targetApplication"
+    const updateKey = `flags.share-media.${this.#settingsKey}.${key}.${dataset.category}.${dataset.setting}`;
+    await this.targetApplication.document.update({ [updateKey]: !setting }, { render: false });
+
+    // Manually modifying the DOM
+    target.classList.toggle("active", !setting);
+  }
+
+  /* -------------------------------------------- */
+  /**
+   * Handle the sharing of the media.
+   * @param {PointerEvent} _event  The triggering event.
+   * @param {HTMLElement}  target  The targeted dom element.
+   * @returns {Promise<boolean>}
+   * @this {MediaOverlay}
+   */
+  static async #onShare(_event, target) {
+    // Prepare data
+    const settings = this.targetElementSettings.settings;
+    const mode = target.dataset.mode;
+
+    // Get mode settings, filter out others modes, keeping only settings that are not layer specific
+    const optionsSettings = Object.entries(settings).reduce((acc, [key, value]) => {
+      // The mode
+      if (key === mode) Object.assign(acc, value);
+      // Not the mode
+      else if (!Object.values(CONFIG.shareMedia.CONST.LAYERS_MODES).includes(key)) {
+        const validator = CONFIG.shareMedia.CONST.MEDIA_SETTINGS_VALIDATORS[key];
+        if (validator && validator(this.targetElementSource)) {
+          Object.assign(acc, value);
+        }
+      }
+      return acc;
+    }, {});
+
+    // Build the media options
+    const options = {
+      src: this.targetElementSource,
+      mode,
+      optionName: target.dataset.optionName,
+      optionValue: target.dataset.optionValue,
+      ...optionsSettings,
+    };
+
+    // Send to manager
+    await game.modules.shareMedia.shareables.manager.dispatch(options);
+  }
+
+  /* -------------------------------------------- */
+  /*  Rendering
+  /* -------------------------------------------- */
+
+  /**
+   * Render only if "this.targetElement" and "this.targetApplication" exists and their respective elements are in the DOM.
+   * @inheritdoc
+   */
+  _canRender(options) {
+    if (!this.targetApplication || !this.targetElement) {
+      this._resetAll();
+      return false;
+    }
+
+    const isV2 = this.targetApplication instanceof ApplicationV2;
+    const applicationElement = isV2
+      ? this.targetApplication.element
+      : this.targetApplication._element.at(0);
+
+    if (!applicationElement?.isConnected || !this.targetElement?.isConnected) {
+      this._resetAll();
+      return false;
+    }
+
+    return super._canRender(options);
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Append "this.element" in the parent container of "this.targetElement" and position the overlay on top of it.
+   * @inheritdoc
+   */
+  async _onRender(context, options) {
+    super._onRender(context, options);
+
+    // Add the application element to the parent of targetElement
+    // Required so this maintains the same z-index and position is maintained during scroll
+    const parent = this.targetElement.parentElement;
+    if (!parent) return this._resetAll();
+    parent.append(this.element);
+
+    // Calculate position of the overlay relative to the targetElement
+    const targetElementStyles = getComputedStyle(this.targetElement);
+    const paddingTop = parseInt(targetElementStyles.paddingTop, 10) || 0;
+    const paddingLeft = parseInt(targetElementStyles.paddingLeft, 10) || 0;
+
+    const top = this.targetElement.offsetTop + paddingTop + this.constructor.OVERLAY_MARGIN_PX;
+    const left = this.targetElement.offsetLeft + paddingLeft + this.constructor.OVERLAY_MARGIN_PX;
+
+    this.element.style.top = `${top}px`;
+    this.element.style.left = `${left}px`;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Clear all state and references when this application closes.
+   * @inheritdoc
+   */
+  _onClose(options) {
+    super._onClose(options);
+
+    // Reset state and clear references
+    this._resetAll();
+  }
+
+  /* -------------------------------------------- */
+  /*  Helpers
+  /* -------------------------------------------- */
+
+  /**
+   * Clear all dependencies and state.
+   */
+  _resetAll() {
+    this._resetState();
+    this._resetDOM();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Clear all dependencies to avoid memory leaks.
+   */
+  _resetState() {
+    this.targetElement = null;
+    this.targetApplication = null;
+    this.htmlContext = null;
+    this.#active = false;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Reset all DOM events, including CSS state.
+   */
+  _resetDOM() {
+    this.#clearHidingListener();
+    if (this.element) this.element.classList.value = "shm";
+  }
+
+  /* -------------------------------------------- */
+  /*  Factory Methods
+  /* -------------------------------------------- */
+
+  /**
+   * Retrieve the configured MediaOverlay implementation.
+   * @type {typeof MediaOverlay}
+   */
+  static get implementation() {
+    let Class = CONFIG.shareMedia.ui.MediaOverlay;
+    if (!isSubclass(Class, MediaOverlay)) {
+      console.warn("Configured MediaOverlay override must be a subclass of MediaOverlay.");
+      Class = MediaOverlay;
+    }
+    return Class;
+  }
+}

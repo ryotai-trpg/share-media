@@ -1,0 +1,50 @@
+<div class="standard-form">
+    {{!--  Actions  --}}
+    <p class="hint">{{localize "share-media.shareables.selector.share.description"}}</p>
+    <fieldset class="flexrow">
+        <legend>{{localize "share-media.shareables.selector.share.mode.label"}}</legend>
+        {{~#each mediaActions as |mode|}}
+            {{!-- Generate actions based on available media actions --}}
+            {{~#each mode as |action|}}
+                <span role="button"
+                    class="button icon {{lookup @root.icons action.icon}} {{~#if action.active}} active{{~/if}}"
+                    data-action="configureMode" data-mode="{{action.mode}}"
+                    data-option-name="{{action.optionName}}" data-option-value="{{action.optionValue}}"
+                    data-tooltip="{{localize (concat "share-media.ui.actions." action.label)}}"
+                    data-tooltip-direction="UP">
+                </span>
+            {{~/each}}
+            {{~#unless @last}}|{{~/unless}}
+        {{~/each}}
+    </fieldset>
+
+    {{!--  Settings  --}}
+    {{~#each mediaSettings as |setting|}}
+        {{~#if setting.isVisible}}
+            <fieldset class="flexrow">
+                <legend>
+                    {{localize "share-media.shareables.selector.share.settings.label" mode=(localize (concat "share-media.ui.settings." setting.label))}}
+                </legend>
+                {{~#each setting.options as |option|}}
+                    <span role="button" class="button flex0 {{~#if option.value}} active {{~/if}}"
+                        data-action="configureSetting"
+                        data-category="{{setting.category}}"
+                        data-setting="{{option.name}}"
+                        data-tooltip="{{localize (concat "share-media.ui.settings." option.description)}}"
+                        data-tooltip-direction="UP">
+                        <i class="{{lookup @root.icons option.name}}"></i>
+                        {{localize (concat "share-media.ui.settings." option.label)}}
+                    </span>
+                {{~/each}}
+            </fieldset>
+        {{~/if}}
+    {{~/each}}
+
+    {{!-- Footer --}}
+    <footer class="form-footer">
+        <button type="submit">
+            <i class="{{icons.validate}}"></i>
+            {{localize "share-media.base.validate"}}
+        </button>
+    </footer>
+</div>

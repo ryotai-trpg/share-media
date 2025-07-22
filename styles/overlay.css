@@ -1,0 +1,64 @@
+@layer shm.layouts {
+  #shm-overlay {
+    /* -------------------------------------------- */
+    /*  Show/Hide feature
+    /* -------------------------------------------- */
+
+    position: absolute;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+
+    /*  Not displaying until ".active"  */
+    &.active {
+      display: block flow;
+
+      /*  Start CSS transition with ".show"  */
+      &.show {
+        opacity: 1;
+      }
+    }
+
+    /* -------------------------------------------- */
+    /*  Layout
+    /* -------------------------------------------- */
+
+    > section {
+      gap: 0.5rem;
+    }
+
+    /*  "aside" starts hidden and is displayed when hovering ".drawer"  */
+    .drawer {
+      position: relative;
+    }
+
+    .drawer:hover > aside {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    /*  "aside" is a submenu positionned absolute  */
+    .drawer > aside {
+      position: absolute;
+      top: 0;
+      left: calc(100% + 0.5rem);
+
+      visibility: hidden;
+      pointer-events: none;
+      opacity: 0;
+
+      transition: opacity 0.5s ease;
+
+      /*  Needed for filling the gap between ".drawer" and "aside"  */
+      &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -0.5rem;
+        width: 0.5rem;
+        height: 100%;
+      }
+    }
+  }
+}
