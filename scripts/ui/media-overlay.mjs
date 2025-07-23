@@ -450,7 +450,7 @@ export default class MediaOverlay extends HandlebarsApplicationMixin(Application
     const isV2 = this.targetApplication instanceof ApplicationV2;
     const applicationElement = isV2
       ? this.targetApplication.element
-      : this.targetApplication._element.at(0);
+      : this.targetApplication._element[0];
 
     if (!applicationElement?.isConnected || !this.targetElement?.isConnected) {
       this._resetAll();

@@ -4,6 +4,10 @@
     /*  Show/Hide feature
     /* -------------------------------------------- */
 
+    /*  Reset CSS  */
+    all: unset;
+
+    /*  Actual properties  */
     position: absolute;
     display: none;
     opacity: 0;
@@ -24,12 +28,27 @@
     /* -------------------------------------------- */
 
     > section {
+      /*  Reset CSS  */
+      all: unset;
+
+      /*  Actual properties  */
+      display: flex;
+      flex-direction: column;
+      flex-wrap: nowrap;
       gap: 0.5rem;
     }
 
     /*  "aside" starts hidden and is displayed when hovering ".drawer"  */
     .drawer {
+      /*  Reset CSS  */
+      all: unset;
+
+      /*  Actual properties  */
       position: relative;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
     }
 
     .drawer:hover > aside {
@@ -40,6 +59,10 @@
 
     /*  "aside" is a submenu positionned absolute  */
     .drawer > aside {
+      /*  Reset CSS  */
+      all: unset;
+
+      /*  Actual properties  */
       position: absolute;
       top: 0;
       left: calc(100% + 0.5rem);
@@ -52,6 +75,10 @@
 
       /*  Needed for filling the gap between ".drawer" and "aside"  */
       &::before {
+        /*  Reset CSS  */
+        all: unset;
+
+        /*  Actual properties  */
         content: "";
         position: absolute;
         top: 0;

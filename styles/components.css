@@ -160,6 +160,7 @@
       padding: 2px 0.5rem;
 
       font-family: var(--font-sans);
+      font-size: var(--font-size-14);
       white-space: nowrap;
 
       color: light-dark(rgba(var(--shm-charcoal) / 1), rgba(var(--shm-cream) / 1));

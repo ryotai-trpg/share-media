@@ -1,7 +1,7 @@
 <media-overlay>
-    <section class="flexcol">
+    <section>
         {{!-- Settings --}}
-        <div class="flexrow drawer">
+        <div class="drawer">
             <button class="small plain icon {{icons.settings}}" data-tooltip="share-media.ui.settings.label"
                 data-tooltip-direction="LEFT" keep-hover></button>
             <aside>
@@ -34,7 +34,7 @@
 
         {{!-- Actions --}}
         {{~#each mediaActions as |mode|}}
-            <div class="flexrow drawer">
+            <div class="drawer">
                 {{!-- Generate actions based on available media actions --}}
                 {{~#each mode as |action|}}
                     <button class="small icon {{lookup @root.icons action.icon}}"

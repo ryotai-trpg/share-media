@@ -155,7 +155,7 @@ export default class MediaDetector {
     const [, html] = args;
     return {
       application,
-      element: html.at(0),
+      element: html[0],
       options: { isFirstRender: application._priorState <= 0 },
     };
   }
