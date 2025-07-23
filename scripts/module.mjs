@@ -53,7 +53,7 @@ Hooks.once("init", () => {
     layers: { value: {}, enumerable: true },
     shareables: { value: { apps: {} }, enumerable: true },
     collections: { value: { apps: {} }, enumerable: true },
-    api: { value: Api, enumerable: true },
+    api: { value: CONFIG.shareMedia.api, enumerable: true },
   });
 
   // Register region behaviors

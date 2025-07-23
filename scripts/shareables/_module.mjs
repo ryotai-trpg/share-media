@@ -13,9 +13,22 @@ export const applyEntitySharingSettings = () => {
 
   // Add context menu entries and token buttons only if settings allow it
   for (const [entity, config] of Object.entries(entitySharingSettings)) {
+    const baseName = entity.slice(0, -1);
+    const baseConfig = CONFIG[baseName.charAt(0).toUpperCase() + baseName.slice(1)];
+    const documentName = baseConfig.documentClass.documentName;
+
+    // Default sharing options
+    const options = {
+      settings: {
+        mode: CONFIG.shareMedia.CONST.LAYERS_MODES.popout,
+        optionName: CONFIG.shareMedia.CONST.LAYERS_OPTIONS.usersAll.name,
+        optionValue: CONFIG.shareMedia.CONST.LAYERS_OPTIONS.usersAll.value,
+      },
+    };
+
     // Sheets
     if (config.sheet) {
-      const hookName = `get${entity.charAt(0).toUpperCase() + entity.slice(1, -1)}ContextOptions`;
+      const hookName = `get${documentName}ContextOptions`;
       Hooks.on(hookName, (_application, menuItems) => {
         // Create the entry
         const entry = {
@@ -29,8 +42,8 @@ export const applyEntitySharingSettings = () => {
           },
           callback: (li) => {
             const document = game[entity].get(li.dataset.entryId);
-            const options = { src: document.img };
-            if (config.caption) options.settings = { caption: document.name };
+            options.src = document.img;
+            if (config.caption) options.settings.caption = document.name;
             new game.modules.shareMedia.shareables.apps.shareSelector(options).render({
               force: true,
             });
@@ -44,8 +57,7 @@ export const applyEntitySharingSettings = () => {
 
     // Tokens
     if (config.hud) {
-      const entityName =
-        entity === "actors" ? "Token" : entity.charAt(0).toUpperCase() + entity.slice(1, -1);
+      const entityName = entity === "actors" ? "Token" : documentName;
       const hookName = `render${entityName}HUD`;
       Hooks.on(hookName, (application, element, _context, _options) => {
         if (!game.users.current.isGM) return;
@@ -54,17 +66,36 @@ export const applyEntitySharingSettings = () => {
         // Create a button
         const button = document.createElement("button");
         button.className = "control-icon";
-        button.dataset.tooltip = "share-media.shareables.selector.entities.label";
+        // Assign the tooltip
+        button.dataset.tooltipClass = "shm";
+        button.dataset.tooltipHtml = game.i18n.localize(
+          "share-media.shareables.selector.entities.label",
+        );
+        if (application.object[baseName]) {
+          button.dataset.tooltipHtml +=
+            "<br>" + game.i18n.localize("share-media.shareables.selector.entities.contextmenu");
+        }
         button.innerHTML = `<i class="${CONFIG.shareMedia.CONST.ICONS.shareAgain}"></i>`;
 
         // Add the click handler to the button
         button.addEventListener("click", () => {
-          const options = { src: application.object.document.texture.src };
-          if (config.caption) options.settings = { caption: application.object[entity].name };
+          options.src = application.object.document.texture.src;
+          if (config.caption) options.settings.caption = application.object.document.name;
           new game.modules.shareMedia.shareables.apps.shareSelector(options).render({
             force: true,
           });
         });
+
+        // Add the right click handler to the button
+        if (application.object[baseName]) {
+          button.addEventListener("contextmenu", () => {
+            options.src = application.object[baseName].img;
+            if (config.caption) options.settings.caption = application.object[baseName].name;
+            new game.modules.shareMedia.shareables.apps.shareSelector(options).render({
+              force: true,
+            });
+          });
+        }
 
         // Add the button to the HUD
         const leftCol = element.querySelector(".col.left");

@@ -7,6 +7,14 @@
   }
 
   /* -------------------------------------------- */
+  /*  Tooltips
+  /* -------------------------------------------- */
+
+  .shm#tooltip.text-center {
+    text-align: center;
+  }
+
+  /* -------------------------------------------- */
   /*  Button
   /* -------------------------------------------- */
 
@@ -18,13 +26,13 @@
     --shm-button-size: 2.5rem;
 
     /*  Reset CSS  */
-    /* all: unset; */
     box-sizing: border-box;
     text-align: left;
     text-decoration: none;
     margin: 0;
     outline: none;
     appearance: none;
+    opacity: 1;
 
     /*  Actual properties  */
     cursor: var(--cursor-pointer);

@@ -22,7 +22,7 @@ declare global {
     const canvas: typeof CanvasModule;
     const layers: typeof LayersModule;
     const shareables: typeof ShareablesModule;
-    api: Api;
+    const api: Api;
   }
 
   // shareMedia module

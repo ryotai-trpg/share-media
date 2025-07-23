@@ -83,7 +83,12 @@ export default class ShareSelector extends HandlebarsApplicationMixin(Applicatio
    */
   _configureRenderOptions(options) {
     super._configureRenderOptions(options);
-    if (options.isFirstRender) this.#populateShareOptions();
+    if (options.isFirstRender)
+      game.modules.shareMedia.utils.applySettingsToMediaOptions(
+        this.options.settings.mode,
+        this.#shareOptions,
+        this.options.settings,
+      );
   }
 
   /* -------------------------------------------- */
@@ -253,21 +258,11 @@ export default class ShareSelector extends HandlebarsApplicationMixin(Applicatio
     )
       return;
 
-    // Get mode settings, filter out others modes, keeping only settings that are not layer specific
-    const optionsSettings = Object.entries(this.#shareOptions.settings).reduce(
-      (acc, [key, value]) => {
-        // The mode
-        if (key === this.#shareOptions.mode) Object.assign(acc, value);
-        // Not the mode
-        else if (!Object.values(CONFIG.shareMedia.CONST.LAYERS_MODES).includes(key)) {
-          const validator = CONFIG.shareMedia.CONST.MEDIA_SETTINGS_VALIDATORS[key];
-          if (validator && validator(this.options.src)) {
-            Object.assign(acc, value);
-          }
-        }
-        return acc;
-      },
-      {},
+    // Get the settings for the selected mode
+    const optionsSettings = game.modules.shareMedia.utils.getMediaSettings(
+      this.options.src,
+      this.#shareOptions.mode,
+      this.#shareOptions.settings,
     );
 
     // Build the media options
@@ -282,48 +277,6 @@ export default class ShareSelector extends HandlebarsApplicationMixin(Applicatio
     const result = await game.modules.shareMedia.shareables.manager.dispatch(options);
     if (result) this.close();
     return result;
-  }
-
-  /* -------------------------------------------- */
-  /*  Helpers
-  /* -------------------------------------------- */
-
-  /**
-   * Populates "this.#shareOptions" with data from "this.options.settings".
-   * @throws {Error} If the provided "mode" is not valid.
-   */
-  #populateShareOptions() {
-    if (Object.keys(this.options.settings).length === 0) return;
-
-    // Prepare data
-    const { mode, ...otherProps } = this.options.settings;
-
-    // Check if share mode is available
-    if (mode && !CONFIG.shareMedia.CONST.LAYERS_MODES[mode])
-      throw new Error(`Share mode "${mode}" is not a valid mode.`);
-
-    // Set mode
-    this.#shareOptions.mode = mode;
-
-    // Create reverse lookup map for efficient searching: property -> section
-    const propMap = new Map(
-      Object.entries(this.#shareOptions.settings).flatMap(([section, settings]) =>
-        Object.keys(settings).map((prop) => [prop, section]),
-      ),
-    );
-
-    // Iterate on settings
-    for (const [prop, value] of Object.entries(otherProps)) {
-      // Check current mode first, then fallback to other sections
-      const section = prop in (this.#shareOptions.settings[mode] || {}) ? mode : propMap.get(prop);
-      if (section && this.#shareOptions.settings[section]) {
-        this.#shareOptions.settings[section][prop] = value;
-        continue;
-      }
-
-      // Add the remaining props
-      this.#shareOptions[prop] = value;
-    }
   }
 
   /* -------------------------------------------- */

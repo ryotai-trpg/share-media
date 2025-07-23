@@ -59,7 +59,7 @@ export default class MediaLayer extends InteractionLayer {
     this.objects.sortableChildren = true;
 
     // Render scene sprites
-    for (const region of canvas.regions.placeables) {
+    for (const region of game.canvas.regions.placeables) {
       const flag = region.document.getFlag("share-media", this.constructor.MEDIA_FLAG_KEY);
       if (flag) this.addSprite({ targetRegion: region.id, ...flag });
     }
@@ -218,7 +218,7 @@ export default class MediaLayer extends InteractionLayer {
     // Check if region has a sort flag, if not assign one
     if (!region.getFlag("share-media", this.constructor.SORT_FLAG_KEY)) {
       let sort = 0;
-      for (const region of game.modules.shareMedia.shareables.apps.regionSelector.getAvailableRegions()) {
+      for (const region of game.modules.shareMedia.utils.getAvailableRegions()) {
         sort = Math.max(
           sort,
           (region.getFlag("share-media", this.constructor.SORT_FLAG_KEY) ?? 0) + 1,
@@ -244,7 +244,7 @@ export default class MediaLayer extends InteractionLayer {
 
     // Determine the minimum/maximum sort value of the other sprites
     let target = front ? -Infinity : Infinity;
-    for (const document of game.modules.shareMedia.shareables.apps.regionSelector.getAvailableRegions()) {
+    for (const document of game.modules.shareMedia.utils.getAvailableRegions()) {
       if (document.id === targetRegion) continue;
       const flag = document.getFlag("share-media", this.constructor.SORT_FLAG_KEY);
       if (flag === undefined) continue;

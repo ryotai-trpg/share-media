@@ -119,7 +119,7 @@ export default class RegionSelector extends HandlebarsApplicationMixin(Applicati
    * }>}
    */
   #prepareRegions() {
-    const regions = this.constructor.getAvailableRegions().map((region) => ({
+    const regions = game.modules.shareMedia.utils.getAvailableRegions().map((region) => ({
       id: region.id,
       name: region.name,
       color: region.color,
@@ -257,28 +257,6 @@ export default class RegionSelector extends HandlebarsApplicationMixin(Applicati
     this.#activeRegion = null;
     if (this.#activeWindow) this.#activeWindow.maximize();
     this.#activeWindow = null;
-  }
-
-  /* -------------------------------------------- */
-  /*  Other Public Methods
-  /* -------------------------------------------- */
-
-  /**
-   * Get available region documents that have at least one "ShareRegionBehaviorType" behavior not disabled.
-   * @returns {RegionDocument[]}
-   */
-  static getAvailableRegions() {
-    return canvas.regions.placeables
-      .filter(
-        (region) =>
-          region.document.shapes.length > 0 &&
-          region.document.behaviors.some(
-            (behavior) =>
-              behavior.type === CONFIG.shareMedia.canvas.ShareRegionBehaviorType.type &&
-              !behavior.disabled,
-          ),
-      )
-      .map((region) => region.document);
   }
 
   /* -------------------------------------------- */

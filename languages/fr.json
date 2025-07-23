@@ -99,12 +99,14 @@
 
     "canvas.layer": {
       "tool": {
-        "label": "Activer/désactiver la couche média"
+        "label": "Activer/désactiver la couche média",
+        "zero": "Aucun média partagé sur la scène, partagez un média sur la scène avant d'activer la couche média."
       }
     },
 
     "shareables.selector": {
       "entities.label": "Partager ce média",
+      "entities.contextmenu": "(Clic droit pour partager le média de la fiche)",
 
       "region": {
         "label": "Sélecteur de région",

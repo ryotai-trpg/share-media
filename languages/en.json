@@ -99,12 +99,14 @@
 
     "canvas.layer": {
       "tool": {
-        "label": "Toggle Media Layer"
+        "label": "Toggle Media Layer",
+        "zero": "No media shared on the current scene, share media on the scene before activating the media layer."
       }
     },
 
     "shareables.selector": {
       "entities.label": "Share this Media",
+      "entities.contextmenu": "(right-click to share the sheet media)",
 
       "region": {
         "label": "Region Selector",

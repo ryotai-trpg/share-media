@@ -48,7 +48,11 @@ export const registerMediaLayer = () => {
           return game.modules.shareMedia.canvas.layer.active;
         })(),
         onChange: (_event, active) => {
-          active ? game.modules.shareMedia.canvas.layer.activate() : game.canvas.tokens.activate();
+          if (active) {
+            if (game.modules.shareMedia.canvas.layer.sprites.size < 1)
+              ui.notifications.info(game.i18n.localize("share-media.canvas.layer.tool.zero"));
+            game.modules.shareMedia.canvas.layer.activate();
+          } else game.canvas.tokens.activate();
         },
       };
     });

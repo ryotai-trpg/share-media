@@ -6,7 +6,10 @@ const { hasProperty } = foundry.utils;
  * @returns {Class}
  */
 export default function DarknessMixin(Base) {
-  /** @param {boolean} [darkness=false]  Should scene darkness being applied to this application? */
+  /**
+   * @param {boolean} [darkness=false]  Should scene darkness being applied to this application?
+   * @param {string}  [sceneId]         Scene the id darkness is bound to.
+   */
   return class extends Base {
     /**
      * Reference to the HTML darkness element.
@@ -17,13 +20,14 @@ export default function DarknessMixin(Base) {
     /** @inheritdoc */
     static DEFAULT_OPTIONS = {
       darkness: false,
+      sceneId: null,
     };
 
     /**
      * Scene id attached to this application.
      * @type {string | null}
      */
-    #sceneId = null;
+    #darknessSceneId = null;
 
     /**
      * ID from hook monitoring scene update.
@@ -58,7 +62,7 @@ export default function DarknessMixin(Base) {
      * @type {boolean}
      */
     get canDisplayDarkness() {
-      return this.options.darkness && game.scenes.current;
+      return this.options.darkness && game.scenes.get(this.#darknessSceneId);
     }
 
     /* -------------------------------------------- */
@@ -75,8 +79,18 @@ export default function DarknessMixin(Base) {
      */
     async #updateDarkness(document, changed, options, _userId) {
       // Darkness must be changed for the specific scene the application is bound to
-      if (document.id !== this.#sceneId || !hasProperty(changed, "environment.darknessLevel"))
+      if (
+        document.id !== this.#darknessSceneId ||
+        !hasProperty(changed, "environment.darknessLevel")
+      )
         return;
+
+      // Handle minimized windows as animations can not happen on them
+      if (this.minimized) {
+        if (this.#darknessAnimation) this.#darknessAnimation.cancel();
+        this.darknessOverlay.style.opacity = changed.environment.darknessLevel;
+        return;
+      }
 
       // Cancel any existing animation
       if (this.#darknessAnimation) {
@@ -95,7 +109,8 @@ export default function DarknessMixin(Base) {
       // Await a finished animation (not cancelled) and reset the animation
       await this.#darknessAnimation.finished.catch((_error) => null);
       if (this.#darknessAnimation?.playState === "finished") {
-        this.#darknessAnimation.commitStyles();
+        if (this.minimized) this.darknessOverlay.style.opacity = changed.environment.darknessLevel;
+        else this.#darknessAnimation.commitStyles();
         this.#darknessAnimation.cancel();
         this.#darknessAnimation = null;
       }
@@ -109,7 +124,7 @@ export default function DarknessMixin(Base) {
      */
     #onCanvasEnvironmentChange(config) {
       // We need to be on the same scene as the canvas
-      if (game.canvas.scene.id !== this.#sceneId) return;
+      if (game.canvas.scene.id !== this.#darknessSceneId) return;
 
       // If no darkness level, do nothing
       const darknessLevel = config.environment?.darknessLevel;
@@ -130,7 +145,7 @@ export default function DarknessMixin(Base) {
       const duration =
         Math.abs(direction - darknessLevel) * CONFIG.Canvas.darknessToDaylightAnimationMS;
       this.#updateDarkness(
-        game.scenes.get(this.#sceneId),
+        game.scenes.get(this.#darknessSceneId),
         { environment: { darknessLevel: direction } },
         { animateDarkness: duration },
       );
@@ -151,7 +166,7 @@ export default function DarknessMixin(Base) {
         ...(this.canDisplayDarkness && {
           darkness: this.canDisplayDarkness,
           darknessColor: new Color(CONFIG.Canvas.darknessColor).css,
-          initialOpacity: game.scenes.current.environment.darknessLevel,
+          initialOpacity: game.scenes.get(this.#darknessSceneId)?.environment.darknessLevel ?? 0,
         }),
       };
     }
@@ -171,13 +186,23 @@ export default function DarknessMixin(Base) {
     /* -------------------------------------------- */
 
     /**
+     * Assign the darkness scene id.
+     * @inheritdoc
+     */
+    _configureRenderOptions(options) {
+      super._configureRenderOptions(options);
+      this.#darknessSceneId = this.options.sceneId ?? game.canvas.scene?.id ?? null;
+    }
+
+    /* -------------------------------------------- */
+
+    /**
      * Watch and update darkness if requested.
      * @inheritdoc
      */
     async _onFirstRender(context, options) {
       await super._onFirstRender(context, options);
       if (this.canDisplayDarkness) {
-        this.#sceneId = game.scenes.current.id;
         this.#sceneHookId = Hooks.on("updateScene", this.#updateDarkness.bind(this));
         this.#canvasHookId = Hooks.on(
           "configureCanvasEnvironment",
@@ -240,7 +265,7 @@ export default function DarknessMixin(Base) {
       this.#sceneHookId = null;
       if (this.#canvasHookId) Hooks.off("configureCanvasEnvironment", this.#canvasHookId);
       this.#canvasHookId = null;
-      this.#sceneId = null;
+      this.#darknessSceneId = null;
       this.#previousCanvasDarknessLevel = null;
     }
 

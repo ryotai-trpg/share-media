@@ -328,7 +328,7 @@ export default class MediaSprite {
     this.#border.eventMode = "none";
     this.#border.visible = false;
 
-    const thickness = CONFIG.Canvas.objectBorderThickness * canvas.dimensions.uiScale;
+    const thickness = CONFIG.Canvas.objectBorderThickness * game.canvas.dimensions.uiScale;
     for (const lineStyle of [
       { width: thickness, color: 0x000000, join: PIXI.LINE_JOIN.ROUND, alignment: 0.75 },
       { width: thickness / 2, color: 0xffffff, join: PIXI.LINE_JOIN.ROUND, alignment: 1 },
@@ -372,7 +372,7 @@ export default class MediaSprite {
     // Create the interaction manager
     this.#mouseInteractionManager = new MouseInteractionManager(
       this.#frame,
-      canvas.stage,
+      game.canvas.stage,
       permissions,
       callbacks,
     );

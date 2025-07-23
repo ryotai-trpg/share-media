@@ -413,19 +413,12 @@ export default class MediaOverlay extends HandlebarsApplicationMixin(Application
     const settings = this.targetElementSettings.settings;
     const mode = target.dataset.mode;
 
-    // Get mode settings, filter out others modes, keeping only settings that are not layer specific
-    const optionsSettings = Object.entries(settings).reduce((acc, [key, value]) => {
-      // The mode
-      if (key === mode) Object.assign(acc, value);
-      // Not the mode
-      else if (!Object.values(CONFIG.shareMedia.CONST.LAYERS_MODES).includes(key)) {
-        const validator = CONFIG.shareMedia.CONST.MEDIA_SETTINGS_VALIDATORS[key];
-        if (validator && validator(this.targetElementSource)) {
-          Object.assign(acc, value);
-        }
-      }
-      return acc;
-    }, {});
+    // Get the settings for the selected mode
+    const optionsSettings = game.modules.shareMedia.utils.getMediaSettings(
+      this.targetElementSource,
+      mode,
+      settings,
+    );
 
     // Build the media options
     const options = {

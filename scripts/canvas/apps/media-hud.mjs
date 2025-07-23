@@ -76,7 +76,7 @@ export default class MediaHUD extends HandlebarsApplicationMixin(ApplicationV2) 
    * @override
    */
   _updatePosition(position) {
-    const s = canvas.dimensions.uiScale;
+    const s = game.canvas.dimensions.uiScale;
     const { x: left, y: top, width, height } = this.#sprite.frame.getLocalBounds();
     Object.assign(position, { left, top, width: width / s, height: height / s });
     position.scale = s;

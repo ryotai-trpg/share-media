@@ -26,8 +26,10 @@ export default class ShareablesManager {
   static PIPELINE_STEPS = [
     { name: "is-gm", condition: (_options) => true },
     { name: "all-users", condition: (options) =>
-      options.optionName === CONFIG.shareMedia.CONST.LAYERS_OPTIONS.usersAll.name
-      && options.optionValue === CONFIG.shareMedia.CONST.LAYERS_OPTIONS.usersAll.value },
+      (options.optionName === CONFIG.shareMedia.CONST.LAYERS_OPTIONS.usersAll.name
+        && options.optionValue === CONFIG.shareMedia.CONST.LAYERS_OPTIONS.usersAll.value)
+      || options.mode === CONFIG.shareMedia.CONST.LAYERS_MODES.scene
+    },
     { name: "user-selection", condition: (options) =>
       options.optionName === CONFIG.shareMedia.CONST.LAYERS_OPTIONS.usersSelection.name
       && options.optionValue === CONFIG.shareMedia.CONST.LAYERS_OPTIONS.usersSelection.value },
@@ -36,6 +38,10 @@ export default class ShareablesManager {
      },
     { name: "region-selection", condition: (options) =>
       options.mode === CONFIG.shareMedia.CONST.LAYERS_MODES.scene
+    },
+    { name: "has-darkness", condition: (options) =>
+      options.darkness
+      && options.mode !== CONFIG.shareMedia.CONST.LAYERS_MODES.scene
     },
     { name: "create-region-flag", condition: (options) =>
       options.mode === CONFIG.shareMedia.CONST.LAYERS_MODES.scene },
@@ -55,6 +61,7 @@ export default class ShareablesManager {
     "user-selection": ShareablesManager._handleUserSelection,
     "blacklist-filter": ShareablesManager._handleBlackListFilter,
     "region-selection": ShareablesManager._handleRegionSelection,
+    "has-darkness": ShareablesManager._handleHasDarkness,
     "create-region-flag": ShareablesManager._handleCreateRegionFlag,
     "create-layer": ShareablesManager._handleCreatelayer,
     "store-media": ShareablesManager._handleStoreMedia,
@@ -74,6 +81,7 @@ export default class ShareablesManager {
    * @property {string}   [optionValue]   Option value which may modify how a media is shared.
    * @property {string}   [caption]       Caption to display.
    * @property {boolean}  [darkness]      Should darkness be applied ("popout" or "fullscreen" modes)
+   * @property {boolean}  [sceneId]       Scene id bound to darkness ("popout" or "fullscreen" modes)
    * @property {boolean}  [immersive]     Should immersive mode be applied ("fullscreen" mode)
    * @property {boolean}  [loop]          Should the video be looped (video only)
    * @property {boolean}  [mute]          should the video be muted (video only)
@@ -290,10 +298,8 @@ export default class ShareablesManager {
       return null;
     }
 
-    const regionSelector = game.modules.shareMedia.shareables.apps.regionSelector;
-
     // If only one region is available, return it directly without opening the region selector
-    const availableRegions = regionSelector.getAvailableRegions();
+    const availableRegions = game.modules.shareMedia.utils.getAvailableRegions();
     if (availableRegions.length === 1) {
       return { ...context, targetRegion: availableRegions[0].id };
     }
@@ -301,9 +307,26 @@ export default class ShareablesManager {
     // Otherwise, open the region selector as usual
     const options = {};
     if (context.targetRegion) options.targetRegion = context.targetRegion;
-    const targetRegion = await regionSelector.wait(options);
+    const targetRegion = await game.modules.shareMedia.shareables.apps.regionSelector.wait(options);
     if (!targetRegion) return null;
     return { ...context, targetRegion };
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle darkness settings.
+   * @param {ShareablesOptions} context  Current pipeline context.
+   * @returns {Promise<ShareablesOptions | null>}
+   * @this {ShareablesManager}
+   */
+  static async _handleHasDarkness(context) {
+    if (!game.canvas) return null;
+
+    // Adding current scene to the context in case of darkness
+    context.sceneId = game.canvas.scene?.id ?? null;
+
+    return context;
   }
 
   /* -------------------------------------------- */
