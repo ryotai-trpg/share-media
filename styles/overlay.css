@@ -95,5 +95,16 @@
         height: 100% !important;
       }
     }
+
+    /*  Right to left variant  */
+    .right.drawer > aside {
+      left: auto !important;
+      right: calc(100% + 0.5rem) !important;
+
+      &::before {
+        left: auto !important;
+        right: -0.5rem !important;
+      }
+    }
   }
 }

@@ -44,6 +44,12 @@ export default class MediaOverlay extends HandlebarsApplicationMixin(Application
    */
   static OVERLAY_MARGIN_PX = 5;
 
+  /**
+   * The minimum space for the overlay to be displayed.
+   * @type {number}
+   */
+  static MINIMUM_AVAILABLE_SPACE = 250;
+
   /** @inheritdoc */
   static DEFAULT_OPTIONS = {
     tag: "aside",
@@ -69,6 +75,21 @@ export default class MediaOverlay extends HandlebarsApplicationMixin(Application
    * @type {boolean}
    */
   #active = false;
+
+  /**
+   * Computed styles of "parentElement" and "targetElement".
+   * @type {{
+   *   parentElement: HTMLElement;
+   *   parentElementStyles: CSSStyleDeclaration;
+   *   parentElementRect: DOMRect;
+   *   targetElementStyles: CSSStyleDeclaration;
+   *   targetElementRect: DOMRect;
+   *   targetElementPaddingTop: number;
+   *   targetElementPaddingLeft: number;
+   *   targetElementPaddingRight: number;
+   * } | null}
+   */
+  #stylesAndRectsCache = null;
 
   /**
    * Current animation end listener to be able to remove it.
@@ -293,9 +314,19 @@ export default class MediaOverlay extends HandlebarsApplicationMixin(Application
 
   /** @inheritdoc */
   async _prepareContext(options) {
+    // Get elements styles and positions
+    const { parentElementRect, targetElementRect, targetElementPaddingLeft } =
+      this.#getStylesAndRects();
+
+    // calculate the available space to display the overlay
+    // This tell us if the overlay should be displayed from left to right or right to left
+    const availableSpace =
+      parentElementRect.right - (targetElementRect.left + targetElementPaddingLeft);
+
     return {
       ...(await super._prepareContext(options)),
       icons: CONFIG.shareMedia.CONST.ICONS,
+      rightToLeft: availableSpace <= this.constructor.MINIMUM_AVAILABLE_SPACE,
       mediaActions: this.#prepareActions(),
       mediaSettings: this.#prepareSettings(),
     };
@@ -469,18 +500,21 @@ export default class MediaOverlay extends HandlebarsApplicationMixin(Application
   async _onRender(context, options) {
     super._onRender(context, options);
 
+    // Get elements styles and positions
+    const {
+      parentElement,
+      parentElementStyles,
+      parentElementRect,
+      targetElementRect,
+      targetElementPaddingTop,
+      targetElementPaddingLeft,
+      targetElementPaddingRight,
+    } = this.#getStylesAndRects();
+
     // Add the application to the detected context or parent element
     // Required so this maintains the same z-index and position is maintained during scroll
-    const parentElement =
-      this.targetElement.closest(this.htmlContext.join()) ?? this.targetElement.parentElement;
     if (!parentElement) return this._resetAll();
     parentElement.append(this.element);
-
-    // Get elements styles and positions
-    const targetElementStyles = getComputedStyle(this.targetElement);
-    const parentElementStyles = getComputedStyle(parentElement);
-    const targetElementRect = this.targetElement.getBoundingClientRect();
-    const parentElementRect = parentElement.getBoundingClientRect();
 
     // If the parent position is "static" (HTML default), then set it to relative
     // [NOTE] This has the potential to break the layout, but doubt it will
@@ -492,32 +526,43 @@ export default class MediaOverlay extends HandlebarsApplicationMixin(Application
     }
 
     // Calculate position of the overlay relative to the targetElement
-    const targetElementPaddingTop = parseInt(targetElementStyles.paddingTop, 10) || 0;
-    const targetElementPaddingLeft = parseInt(targetElementStyles.paddingLeft, 10) || 0;
+    let top, horizontalProperty, horizontalPosition;
 
-    let top =
+    top =
       targetElementRect.top -
       parentElementRect.top +
       targetElementPaddingTop +
       parentElement.scrollTop;
-    let left =
-      targetElementRect.left -
-      parentElementRect.left +
-      targetElementPaddingLeft +
-      parentElement.scrollLeft;
+
+    if (context.rightToLeft) {
+      horizontalProperty = "right";
+      horizontalPosition =
+        parentElementRect.right -
+        targetElementRect.right +
+        targetElementPaddingRight +
+        parentElement.scrollLeft;
+    } else {
+      horizontalProperty = "left";
+      horizontalPosition =
+        targetElementRect.left -
+        parentElementRect.left +
+        targetElementPaddingLeft +
+        parentElement.scrollLeft;
+    }
 
     // Prevent negative positioning (out of frame) because of special targetElement styles
     top = top < 0 ? 0 : top;
-    left = left < 0 ? 0 : left;
+    horizontalPosition = horizontalPosition < 0 ? 0 : horizontalPosition;
 
     // Add overlay offset
     top += this.constructor.OVERLAY_MARGIN_PX;
-    left += this.constructor.OVERLAY_MARGIN_PX;
+    horizontalPosition += this.constructor.OVERLAY_MARGIN_PX;
 
     // Set the application position
     // "important" is required so nothing can override this
     this.element.style.setProperty("top", `${top}px`, "important");
-    this.element.style.setProperty("left", `${left}px`, "important");
+    this.element.style.setProperty(horizontalProperty, `${horizontalPosition}px`, "important");
+    this.element.style.removeProperty(horizontalProperty === "left" ? "right" : "left");
   }
 
   /* -------------------------------------------- */
@@ -554,6 +599,7 @@ export default class MediaOverlay extends HandlebarsApplicationMixin(Application
     this.targetElement = null;
     this.targetApplication = null;
     this.htmlContext = null;
+    this.#stylesAndRectsCache = null;
     this.#active = false;
   }
 
@@ -565,6 +611,47 @@ export default class MediaOverlay extends HandlebarsApplicationMixin(Application
   _resetDOM() {
     this.#clearHidingListener();
     if (this.element) this.element.classList.value = "shm";
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Get computed styles and bounding rectangles for parent and target elements.
+   * @returns {ReturnType<MediaOverlay["#getStylesAndRects"]>}
+   */
+  #getStylesAndRects() {
+    // If already in cache return it
+    if (this.#stylesAndRectsCache) {
+      return this.#stylesAndRectsCache;
+    }
+
+    // Get the parent
+    const parentElement =
+      this.targetElement.closest(this.htmlContext.join()) ?? this.targetElement.parentElement;
+
+    // Get the data
+    const parentElementStyles = getComputedStyle(parentElement);
+    const parentElementRect = parentElement.getBoundingClientRect();
+    const targetElementStyles = getComputedStyle(this.targetElement);
+    const targetElementRect = this.targetElement.getBoundingClientRect();
+    const targetElementPaddingTop = parseInt(targetElementStyles.paddingTop, 10) || 0;
+    const targetElementPaddingLeft = parseInt(targetElementStyles.paddingLeft, 10) || 0;
+    const targetElementPaddingRight = parseInt(targetElementStyles.paddingRight, 10) || 0;
+
+    // Cache it
+    this.#stylesAndRectsCache = {
+      parentElement,
+      parentElementStyles,
+      parentElementRect,
+      targetElementStyles,
+      targetElementRect,
+      targetElementPaddingTop,
+      targetElementPaddingLeft,
+      targetElementPaddingRight,
+    };
+
+    // Return the newly calculated values
+    return this.#stylesAndRectsCache;
   }
 
   /* -------------------------------------------- */

@@ -212,6 +212,24 @@
         opacity: 0;
       }
     }
+
+    /*  Right to left variant  */
+    &.right li {
+      &:not([role="button"])::before {
+        content: "\f0d9";
+        font-family: var(--font-awesome);
+        margin-right: 0.5rem;
+      }
+
+      &:not([role="button"])::after {
+        display: none;
+      }
+
+      > menu {
+        left: auto;
+        right: 100%;
+      }
+    }
   }
 
   /* -------------------------------------------- */
