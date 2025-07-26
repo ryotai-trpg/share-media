@@ -108,12 +108,17 @@ export default class MediaDetector {
    */
   #onPointerLeave(event) {
     const { target: element, relatedTarget: nextElement } = event;
-    // Leave only if the current element is the detected element and the next element is not the overlay
+
+    // Don't leave if already left, from irrelevant element, or moving to overlay/this.element
     if (
-      element !== this.element ||
-      game.modules.shareMedia.ui.overlay.element?.contains(nextElement)
+      !this.element ||
+      (element !== this.element &&
+        !game.modules.shareMedia.ui.overlay.element?.contains(element)) ||
+      game.modules.shareMedia.ui.overlay.element?.contains(nextElement) ||
+      nextElement === this.element
     )
       return;
+
     this.leave();
   }
 
