@@ -65,6 +65,7 @@ export const applyEntitySharingSettings = () => {
 
         // Create a button
         const button = document.createElement("button");
+        button.type = "button";
         button.className = "control-icon";
         // Assign the tooltip
         button.dataset.tooltipClass = "shm";
@@ -75,7 +76,7 @@ export const applyEntitySharingSettings = () => {
           button.dataset.tooltipHtml +=
             "<br>" + game.i18n.localize("share-media.shareables.selector.entities.contextmenu");
         }
-        button.innerHTML = `<i class="${CONFIG.shareMedia.CONST.ICONS.shareAgain}"></i>`;
+        button.innerHTML = `<i class="${CONFIG.shareMedia.CONST.ICONS.shareAgain}" inert></i>`;
 
         // Add the click handler to the button
         button.addEventListener("click", () => {

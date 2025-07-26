@@ -160,14 +160,14 @@ export default class MediaOverlay extends HandlebarsApplicationMixin(Application
    * The element on which the overlay is rendered.
    * @param {ApplicationV1 | ApplicationV2} application
    * The application linked to the element.
-   * @param {(typeof CONFIG.shareMedia.CONST.MEDIA_HOOKS)[number]["htmlContext"]} [context]
+   * @param {(typeof CONFIG.shareMedia.CONST.MEDIA_HOOKS)[number]["htmlContext"]} context
    * An HTML context of valid containers for the element.
    * @returns {Promise<this>}
    */
   async activate(element, application, context) {
     this.targetElement = element;
     this.targetApplication = application;
-    if (context) this.htmlContext = context;
+    this.htmlContext = context;
 
     // Ensure that a previously rendered application can be rerendered
     // [NOTE] this is not an infinite loop because "this.close()"
@@ -469,22 +469,55 @@ export default class MediaOverlay extends HandlebarsApplicationMixin(Application
   async _onRender(context, options) {
     super._onRender(context, options);
 
-    // Add the application element to the parent of targetElement
+    // Add the application to the detected context or parent element
     // Required so this maintains the same z-index and position is maintained during scroll
-    const parent = this.targetElement.parentElement;
-    if (!parent) return this._resetAll();
-    parent.append(this.element);
+    const parentElement =
+      this.targetElement.closest(this.htmlContext.join()) ?? this.targetElement.parentElement;
+    if (!parentElement) return this._resetAll();
+    parentElement.append(this.element);
+
+    // Get elements styles and positions
+    const targetElementStyles = getComputedStyle(this.targetElement);
+    const parentElementStyles = getComputedStyle(parentElement);
+    const targetElementRect = this.targetElement.getBoundingClientRect();
+    const parentElementRect = parentElement.getBoundingClientRect();
+
+    // If the parent position is "static" (HTML default), then set it to relative
+    // [NOTE] This has the potential to break the layout, but doubt it will
+    // [TODO] Remove this with V16: only V1 templates seem to have this issue
+    if (parentElementStyles.position === "static") {
+      parentElement.style.position = "relative";
+      const editButton = parentElement.parentElement.querySelector(":scope > .editor-edit");
+      if (editButton) editButton.style.zIndex = "1";
+    }
 
     // Calculate position of the overlay relative to the targetElement
-    const targetElementStyles = getComputedStyle(this.targetElement);
-    const paddingTop = parseInt(targetElementStyles.paddingTop, 10) || 0;
-    const paddingLeft = parseInt(targetElementStyles.paddingLeft, 10) || 0;
+    const targetElementPaddingTop = parseInt(targetElementStyles.paddingTop, 10) || 0;
+    const targetElementPaddingLeft = parseInt(targetElementStyles.paddingLeft, 10) || 0;
 
-    const top = this.targetElement.offsetTop + paddingTop + this.constructor.OVERLAY_MARGIN_PX;
-    const left = this.targetElement.offsetLeft + paddingLeft + this.constructor.OVERLAY_MARGIN_PX;
+    let top =
+      targetElementRect.top -
+      parentElementRect.top +
+      targetElementPaddingTop +
+      parentElement.scrollTop;
+    let left =
+      targetElementRect.left -
+      parentElementRect.left +
+      targetElementPaddingLeft +
+      parentElement.scrollLeft;
 
-    this.element.style.top = `${top}px`;
-    this.element.style.left = `${left}px`;
+    // Prevent negative positioning (out of frame) because of special targetElement styles
+    top = top < 0 ? 0 : top;
+    left = left < 0 ? 0 : left;
+
+    // Add overlay offset
+    top += this.constructor.OVERLAY_MARGIN_PX;
+    left += this.constructor.OVERLAY_MARGIN_PX;
+
+    // Set the application position
+    // "important" is required so nothing can override this
+    this.element.style.setProperty("top", `${top}px`, "important");
+    this.element.style.setProperty("left", `${left}px`, "important");
   }
 
   /* -------------------------------------------- */

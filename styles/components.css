@@ -2,7 +2,8 @@
   /* -------------------------------------------- */
   /*  Form fields
   /* -------------------------------------------- */
-  .shm.form-fields:has(input[type="checkbox"]) {
+  .shm.form-fields:has(input[type="checkbox"]),
+  .shm.form-fields:has(input[type="radio"]) {
     flex: 0;
   }
 
@@ -110,6 +111,7 @@
       border-color: light-dark(rgba(var(--shm-cream) / 1), rgba(var(--shm-cream) / 1));
     }
 
+    &.active,
     &:active {
       outline: thin solid light-dark(rgba(var(--shm-orange) / 1), rgba(var(--shm-orange) / 1));
       box-shadow: 0 0 4px light-dark(rgba(var(--shm-orange) / 1), rgba(var(--shm-orange) / 1));
