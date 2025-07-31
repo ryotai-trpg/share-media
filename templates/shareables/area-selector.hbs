@@ -1,0 +1,41 @@
+<area-selector>
+    {{!-- Instructions --}}
+    {{~#if areas.length}}
+        <p class="hint">{{localize "share-media.shareables.selector.area.description"}}</p>
+    {{~else}}
+        <p class="hint">
+            {{{localize "share-media.shareables.selector.area.zero" type=(localize "TYPES.RegionBehavior.share-media.ShareRegion")}}}
+        </p>
+    {{~/if}}
+
+    {{!-- Regions --}}
+    <div class="scrollable flexcol">
+        {{~#each areas as |area|}}
+            <div class="form-group" data-area-uuid="{{area.uuid}}">
+                {{!-- Label --}}
+                <label for="{{area.uuid}}" class="flexrow">
+                    <i class="shm square padded pip" style="--pip-color: {{area.color.css}}"></i>{{area.name}}
+                </label>
+
+                {{!-- Field --}}
+                <div class="shm form-fields">
+                    <input type="radio" name="area" id="{{area.uuid}}" value="{{area.uuid}}"
+                        {{~#if area.checked}}checked{{~/if}}>
+                </div>
+            </div>
+        {{~/each}}
+    </div>
+
+    {{!-- Footer --}}
+    <footer class="form-footer">
+        <button type="submit">
+            {{~#if areas.length}}
+                <i class="{{icons.validate}}"></i>
+                {{localize "share-media.base.validate"}}
+            {{~else}}
+                <i class="{{icons.cancel}}"></i>
+                {{localize "share-media.base.cancel"}}
+            {{~/if}}
+        </button>
+    </footer>
+</area-selector>

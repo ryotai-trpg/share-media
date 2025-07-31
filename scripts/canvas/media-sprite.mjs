@@ -6,27 +6,27 @@ const { isSubclass } = foundry.utils;
 /** @typedef {import("./apps/media-hud.mjs").default} MediaHUD */
 
 /**
- * A class responsible for generating a sprite mesh, mask and frame from a media source URL.
- * @param {string}         src                             The source URL of the media to display.
- * @param {RegionDocument} region                          The region bound to this sprite.
- * @param {Object}         [options]                       Additional optional arguments.
- * @param {string}         [options.optionName="display"]  The optional display mode.
- * @param {string}         [options.optionValue="fit"]     The optional display mode value.
- * @param {string}         [options.loop=false]            Optional loop argument for videos.
- * @param {string}         [options.mute=false]            Optional mute argument for videos.
+ * Base class for generating sprite meshes, masks, frames and borders from media sources.
+ * @param {string}                        src                             The source URL of the media to display.
+ * @param {RegionDocument | TileDocument} area                            The area bound to this sprite.
+ * @param {Object}                        [options]                       Additional optional arguments.
+ * @param {string}                        [options.optionName="display"]  The optional display mode.
+ * @param {string}                        [options.optionValue="fit"]     The optional display mode value.
+ * @param {string}                        [options.loop=false]            Optional loop argument for videos.
+ * @param {string}                        [options.mute=false]            Optional mute argument for videos.
  * @throws {Error} If the two basic arguments are passed to this constructor.
  */
 export default class MediaSprite {
-  constructor(src, region, options) {
+  constructor(src, area, options) {
     // Check basic arguments
-    if (!src || !region)
+    if (!src || !area)
       throw new Error(
-        'You must pass a valid "src" and "region document id" to instantiate the class "SpriteMesh".',
+        'You must pass a valid "src" and "area document uuid" to instantiate the class "SpriteMesh".',
       );
 
     // Assign mandatory arguments
     this.src = src;
-    this.region = region;
+    this.area = area;
 
     // Assign optional arguments
     Object.assign(this.options, options);
@@ -41,10 +41,10 @@ export default class MediaSprite {
   src = null;
 
   /**
-   * The Region document bound to this sprite.
-   * @type {RegionDocument | null}
+   * The area document bound to this sprite.
+   * @type {Document | null}
    */
-  region = null;
+  area = null;
 
   /**
    * Options which change the way this media is rendered.
@@ -96,25 +96,28 @@ export default class MediaSprite {
    * The primary sprite mesh created for this sprite.
    * @type {PrimarySpriteMesh | null}
    */
-  #mesh = null;
+  _mesh = null;
 
   /**
    * Mesh mask graphics.
    * @type {PIXI.Graphics | null}
+   * @protected
    */
-  #mask = null;
+  _mask = null;
 
   /**
    * The empty transparent frame of this sprite.
    * @type {PIXI.Graphics | null}
+   * @protected
    */
-  #frame = null;
+  _frame = null;
 
   /**
    * The border of this sprite.
    * @type {PIXI.Graphics}
+   * @protected
    */
-  #border = null;
+  _border = null;
 
   /**
    * Video ended event handler function.
@@ -130,16 +133,6 @@ export default class MediaSprite {
 
   /* -------------------------------------------- */
   /*  Getters & Setters
-  /* -------------------------------------------- */
-
-  /**
-   * Getter for the internal "this.#frame" object.
-   * @type {PIXI.Graphics | null}
-   */
-  get frame() {
-    return this.#frame;
-  }
-
   /* -------------------------------------------- */
 
   /**
@@ -160,7 +153,7 @@ export default class MediaSprite {
    * @type {MediaSprite | null}
    */
   get hovered() {
-    return this.constructor.hovered;
+    return MediaSprite.hovered;
   }
 
   /* -------------------------------------------- */
@@ -168,7 +161,7 @@ export default class MediaSprite {
   set hovered(value) {
     if (!(value instanceof this.constructor) && value !== null)
       throw new Error('Wrong type passed to hovered "MediaSprite"');
-    this.constructor.hovered = value;
+    MediaSprite.hovered = value;
   }
 
   /* -------------------------------------------- */
@@ -178,7 +171,7 @@ export default class MediaSprite {
    * @type {MediaSprite | null}
    */
   get controlled() {
-    return this.constructor.controlled;
+    return MediaSprite.controlled;
   }
   /* -------------------------------------------- */
 
@@ -190,7 +183,7 @@ export default class MediaSprite {
   set controlled(value) {
     if (!(value instanceof this.constructor) && value !== null)
       throw new Error('Wrong type passed to controlled "MediaSprite"');
-    this.constructor.controlled = value;
+    MediaSprite.controlled = value;
   }
 
   /* -------------------------------------------- */
@@ -200,7 +193,7 @@ export default class MediaSprite {
    * @type {boolean}
    */
   get isControlled() {
-    return this.constructor.controlled === this;
+    return MediaSprite.controlled === this;
   }
 
   /* -------------------------------------------- */
@@ -211,8 +204,8 @@ export default class MediaSprite {
    */
   get hud() {
     // Initialize the HUD if not existent
-    if (!this.constructor.hud) this.constructor.hud = new game.modules.shareMedia.canvas.apps.hud();
-    return this.constructor.hud;
+    if (!MediaSprite.hud) MediaSprite.hud = new game.modules.shareMedia.canvas.apps.hud();
+    return MediaSprite.hud;
   }
 
   /* -------------------------------------------- */
@@ -225,12 +218,12 @@ export default class MediaSprite {
    * @throws {Error} If the texture couldn't be loaded.
    */
   async initialize() {
-    // Create mesh, mask and frame
-    await this._createMesh();
-    this._createMask();
-    this._createFrame();
-    this._createBorder();
-    this._createInteractionManager();
+    // Create mesh, mask, border and interaction manager
+    await this.#createMesh();
+    this.#createMask();
+    this.#createFrame();
+    this.#createBorder();
+    this.#createInteractionManager();
 
     // Return the instance
     return this;
@@ -241,7 +234,7 @@ export default class MediaSprite {
   /**
    * Create the mesh to be added to the "primary" canvas group.
    */
-  async _createMesh() {
+  async #createMesh() {
     // Load the texture with a module cache key
     this.src = `${this.src}?share-media-texture`;
     const texture = await loadTexture(this.src);
@@ -249,22 +242,15 @@ export default class MediaSprite {
     MediaSprite.#incrementTextureRef(this.src);
 
     // Create the mesh
-    this.#mesh = new PrimarySpriteMesh(texture);
+    this._mesh = new PrimarySpriteMesh(texture);
 
-    // Get the region bounds
-    const bounds = this.region.bounds;
+    // Fill the mesh (delegated to subclasses)
+    this._createMesh();
 
-    // Scale the mesh to appropriate dimensions
-    this.#mesh.resize(bounds.width, bounds.height, { fit: this.fitMode });
-
-    // Position the mesh
-    this.#mesh.x = bounds.x + (bounds.width - this.#mesh.width) / 2;
-    this.#mesh.y = bounds.y + (bounds.height - this.#mesh.height) / 2;
-
-    // Assign "primary" canvas sort and region sort
-    this.#mesh.sortLayer = this.constructor.SORT_LAYER;
-    this.#mesh.sort =
-      this.region.getFlag(
+    // Assign "primary" canvas sort and area sort
+    this._mesh.sortLayer = MediaSprite.SORT_LAYER;
+    this._mesh.sort =
+      this.area.getFlag(
         "share-media",
         game.modules.shareMedia.canvas.layer.constructor.SORT_FLAG_KEY,
       ) ?? 1;
@@ -273,36 +259,35 @@ export default class MediaSprite {
   /* -------------------------------------------- */
 
   /**
+   * Handle mesh fill and position. To be implemented by subclasses.
+   */
+  _createMesh() {
+    throw new Error("_createMesh must be implemented by subclass");
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Create the mask added to the mesh.
    */
-  _createMask() {
+  #createMask() {
     // Create an empty mask
-    this.#mask = new PIXI.Graphics();
+    this._mask = new PIXI.Graphics();
 
-    // Get the region polygons
-    const polygons = this.region.polygons;
-
-    // Fill the mask
-    if (polygons?.length) {
-      this.#mask.beginFill(0xffffff, 1);
-
-      for (const polygon of polygons) {
-        if (polygon.isPositive) {
-          // Positive polygon = outer boundary
-          this.#mask.drawPolygon(polygon);
-        } else {
-          // Negative polygon = hole
-          this.#mask.beginHole();
-          this.#mask.drawPolygon(polygon);
-          this.#mask.endHole();
-        }
-      }
-
-      this.#mask.endFill();
-    }
+    // Fill the mask (delegated to subclasses)
+    this._createMask();
 
     // Add the mask to the mesh
-    this.#mesh.mask = this.#mask;
+    this._mesh.mask = this._mask;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Fill and position the mask graphics. Must be implemented by subclasses.
+   */
+  _createMask() {
+    throw new Error("_createMask must be implemented by subclass");
   }
 
   /* -------------------------------------------- */
@@ -311,37 +296,35 @@ export default class MediaSprite {
    * Create a transparent frame to be added to the "media" layer.
    * [INFO] This is a simple transparent copy of the mask.
    */
-  _createFrame() {
+  #createFrame() {
     // Simply clone the mask and make it transparent
-    this.#frame = this.#mask.clone();
-    this.#frame.alpha = 0;
-    this.#frame.cursor = "pointer";
+    this._frame = this._mask.clone();
+    this._frame.alpha = 0;
+    this._frame.cursor = "pointer";
   }
 
   /* -------------------------------------------- */
 
   /**
-   * Create a border around "this.#frame"
+   * Create a border around "this._frame"
+   */
+  #createBorder() {
+    // Create an empty border
+    this._border = new PIXI.Graphics();
+    this._border.eventMode = "none";
+    this._border.visible = false;
+
+    // Fill the border (delegated to subclasses)
+    this._createBorder();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Fill and position the border shape. Must be implemented by subclasses.
    */
   _createBorder() {
-    this.#border = new PIXI.Graphics();
-    this.#border.eventMode = "none";
-    this.#border.visible = false;
-
-    const thickness = CONFIG.Canvas.objectBorderThickness * game.canvas.dimensions.uiScale;
-    for (const lineStyle of [
-      { width: thickness, color: 0x000000, join: PIXI.LINE_JOIN.ROUND, alignment: 0.75 },
-      { width: thickness / 2, color: 0xffffff, join: PIXI.LINE_JOIN.ROUND, alignment: 1 },
-    ]) {
-      this.#border.lineStyle(lineStyle);
-      for (const node of this.region.polygonTree) {
-        if (node.isHole) continue;
-        this.#border.drawShape(node.polygon);
-        this.#border.beginHole();
-        for (const hole of node.children) this.#border.drawShape(hole.polygon);
-        this.#border.endHole();
-      }
-    }
+    throw new Error("_createBorder must be implemented by subclass");
   }
 
   /* -------------------------------------------- */
@@ -349,7 +332,7 @@ export default class MediaSprite {
   /**
    * Create a standard MouseInteractionManager for "this.#frame".
    */
-  _createInteractionManager() {
+  #createInteractionManager() {
     // Handle permissions to perform various actions
     const permissions = {
       hoverIn: () => game.users.current.isGM,
@@ -371,7 +354,7 @@ export default class MediaSprite {
 
     // Create the interaction manager
     this.#mouseInteractionManager = new MouseInteractionManager(
-      this.#frame,
+      this._frame,
       game.canvas.stage,
       permissions,
       callbacks,
@@ -398,8 +381,8 @@ export default class MediaSprite {
     if (this.isControlled) return;
 
     // Show the border
-    this.#border.visible = true;
-    this.#border.tint = CONFIG.Canvas.dispositionColors.FRIENDLY;
+    this._border.visible = true;
+    this._border.tint = CONFIG.Canvas.dispositionColors.FRIENDLY;
   }
 
   /* -------------------------------------------- */
@@ -415,7 +398,7 @@ export default class MediaSprite {
     if (this.isControlled) return;
 
     // Hide the border
-    this.#border.visible = false;
+    this._border.visible = false;
   }
 
   /* -------------------------------------------- */
@@ -448,9 +431,9 @@ export default class MediaSprite {
     if (this.isControlled) return;
     if (!this.isControlled) this.controlled?.release();
     this.controlled = this;
-    this.constructor.lastControlled = this.region.id;
-    this.#border.visible = true;
-    this.#border.tint = CONFIG.Canvas.dispositionColors.CONTROLLED;
+    MediaSprite.lastControlled = this.area.uuid;
+    this._border.visible = true;
+    this._border.tint = CONFIG.Canvas.dispositionColors.CONTROLLED;
   }
 
   /* -------------------------------------------- */
@@ -462,7 +445,7 @@ export default class MediaSprite {
     if (!this.isControlled) return;
     this.controlled = null;
     this.hud.close();
-    this.#border.visible = false;
+    this._border.visible = false;
   }
 
   /* -------------------------------------------- */
@@ -476,25 +459,25 @@ export default class MediaSprite {
     if (!game.canvas) return;
 
     // Add the mask to the "hidden" canvas group
-    game.canvas.masks.addChild(this.#mask);
+    game.canvas.masks.addChild(this._mask);
     // Add the sprite to the "primary" canvas group
-    game.canvas.primary.addChild(this.#mesh);
+    game.canvas.primary.addChild(this._mesh);
     // Add the frame to the "media" layer
-    game.modules.shareMedia.canvas.layer.objects.addChild(this.#frame);
+    game.modules.shareMedia.canvas.layer.objects.addChild(this._frame);
     // Add the border to the "media" layer
-    game.modules.shareMedia.canvas.layer.objects.addChild(this.#border);
+    game.modules.shareMedia.canvas.layer.objects.addChild(this._border);
 
     // Manage video playback
-    const video = game.video.getVideoSource(this.#mesh);
+    const video = game.video.getVideoSource(this._mesh);
     if (video) {
       // Add this video to the primary if video shouldn't be muted
       // [INFO] Foundry handles volume for us
-      if (!this.options.mute) game.canvas.primary.videoMeshes.add(this.#mesh);
+      if (!this.options.mute) game.canvas.primary.videoMeshes.add(this._mesh);
 
       // Delete media on ended if loop is "false"
       if (!this.options.loop) {
         this.#videoEndedHandler = () =>
-          game.modules.shareMedia.canvas.layer.deleteSprite(this.region.id, { unsetFlag: true });
+          game.modules.shareMedia.canvas.layer.deleteSprite(this.area.uuid, { unsetFlag: true });
         video.addEventListener("ended", this.#videoEndedHandler);
       }
 
@@ -508,9 +491,9 @@ export default class MediaSprite {
     // Reassign controls if layer is still active
     if (game.modules.shareMedia.canvas.layer.active) {
       // Control this sprite again if it was the last controlled
-      if (this.constructor.lastControlled === this.region.id) this.control();
-      // Reopen the hud if it was open for the sprite region
-      if (game.modules.shareMedia.canvas.apps.hud.lastSprite === this.region.id)
+      if (MediaSprite.lastControlled === this.area.uuid) this.control();
+      // Reopen the hud if it was open for the sprite area
+      if (game.modules.shareMedia.canvas.apps.hud.lastSprite === this.area.uuid)
         this.hud.bind(this);
     }
   }
@@ -528,14 +511,14 @@ export default class MediaSprite {
     if (this.hovered) this.hovered = null;
 
     // Manage video
-    const video = game.video.getVideoSource(this.#mesh);
+    const video = game.video.getVideoSource(this._mesh);
     if (video) {
       if (this.#videoEndedHandler) {
         video.removeEventListener("ended", this.#videoEndedHandler);
         this.#videoEndedHandler = null;
       }
-      if (game.canvas.primary.videoMeshes.has(this.#mesh))
-        game.canvas.primary.videoMeshes.delete(this.#mesh);
+      if (game.canvas.primary.videoMeshes.has(this._mesh))
+        game.canvas.primary.videoMeshes.delete(this._mesh);
       game.video.stop(video);
     }
 
@@ -543,23 +526,23 @@ export default class MediaSprite {
     this.#mouseInteractionManager.cancel();
 
     // Remove PIXI elements from canvas
-    if (this.#mesh.parent) this.#mesh.parent.removeChild(this.#mesh);
-    if (this.#mask.parent) this.#mask.parent.removeChild(this.#mask);
-    if (this.#frame.parent) this.#frame.parent.removeChild(this.#frame);
-    if (this.#border.parent) this.#border.parent.removeChild(this.#border);
+    if (this._mesh.parent) this._mesh.parent.removeChild(this._mesh);
+    if (this._mask.parent) this._mask.parent.removeChild(this._mask);
+    if (this._frame.parent) this._frame.parent.removeChild(this._frame);
+    if (this._border.parent) this._border.parent.removeChild(this._border);
 
     // Destroy PIXI elements
-    if (!this.#mesh.destroyed) this.#mesh.destroy();
-    if (!this.#mask.destroyed) this.#mask.destroy();
-    if (!this.#frame.destroyed) this.#frame.destroy();
-    if (!this.#border.destroyed) this.#border.destroy();
+    if (!this._mesh.destroyed) this._mesh.destroy();
+    if (!this._mask.destroyed) this._mask.destroy();
+    if (!this._frame.destroyed) this._frame.destroy();
+    if (!this._border.destroyed) this._border.destroy();
 
     // Remove references
-    this.region = null;
-    this.#mesh = null;
-    this.#mask = null;
-    this.#frame = null;
-    this.#border = null;
+    this.area = null;
+    this._mesh = null;
+    this._mask = null;
+    this._frame = null;
+    this._border = null;
     this.#mouseInteractionManager = null;
 
     // Unload texture if needed
@@ -608,7 +591,7 @@ export default class MediaSprite {
   /* -------------------------------------------- */
 
   /**
-   * Retrieve the configured MediaSprite implementation.
+   * Retrieve the configured implementation for this sprite type.
    * @type {typeof MediaSprite}
    */
   static get implementation() {

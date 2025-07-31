@@ -36,14 +36,14 @@ export default class ShareablesManager {
     { name: "blacklist-filter", condition: (options) =>
         options.mode !== CONFIG.shareMedia.CONST.LAYERS_MODES.scene
      },
-    { name: "region-selection", condition: (options) =>
+    { name: "area-selection", condition: (options) =>
       options.mode === CONFIG.shareMedia.CONST.LAYERS_MODES.scene
     },
     { name: "has-darkness", condition: (options) =>
       options.darkness
       && options.mode !== CONFIG.shareMedia.CONST.LAYERS_MODES.scene
     },
-    { name: "create-region-flag", condition: (options) =>
+    { name: "create-area-flag", condition: (options) =>
       options.mode === CONFIG.shareMedia.CONST.LAYERS_MODES.scene },
     { name: "create-layer", condition: (options) =>
       options.mode !== CONFIG.shareMedia.CONST.LAYERS_MODES.scene },
@@ -60,9 +60,9 @@ export default class ShareablesManager {
     "all-users": ShareablesManager._handleAllUsers,
     "user-selection": ShareablesManager._handleUserSelection,
     "blacklist-filter": ShareablesManager._handleBlackListFilter,
-    "region-selection": ShareablesManager._handleRegionSelection,
+    "area-selection": ShareablesManager._handleAreaSelection,
     "has-darkness": ShareablesManager._handleHasDarkness,
-    "create-region-flag": ShareablesManager._handleCreateRegionFlag,
+    "create-area-flag": ShareablesManager._handleCreateAreaFlag,
     "create-layer": ShareablesManager._handleCreatelayer,
     "store-media": ShareablesManager._handleStoreMedia,
   };
@@ -73,18 +73,18 @@ export default class ShareablesManager {
 
   /**
    * @typedef {Object} ShareablesOptions
-   * @property {string}   src             Source URL of the media to share.
-   * @property {string}   mode            The display mode.
-   * @property {string[]} [targetUsers]   Users to share to.
-   * @property {string}   [targetRegion]  Region to display to.
-   * @property {string}   [optionName]    Option name which may modify how a media is shared.
-   * @property {string}   [optionValue]   Option value which may modify how a media is shared.
-   * @property {string}   [caption]       Caption to display.
-   * @property {boolean}  [darkness]      Should darkness be applied ("popout" or "fullscreen" modes)
-   * @property {boolean}  [sceneId]       Scene id bound to darkness ("popout" or "fullscreen" modes)
-   * @property {boolean}  [immersive]     Should immersive mode be applied ("fullscreen" mode)
-   * @property {boolean}  [loop]          Should the video be looped (video only)
-   * @property {boolean}  [mute]          should the video be muted (video only)
+   * @property {string}   src            Source URL of the media to share.
+   * @property {string}   mode           The display mode.
+   * @property {string[]} [targetUsers]  Users to share to.
+   * @property {string}   [targetArea]   Area to display to.
+   * @property {string}   [optionName]   Option name which may modify how a media is shared.
+   * @property {string}   [optionValue]  Option value which may modify how a media is shared.
+   * @property {string}   [caption]      Caption to display.
+   * @property {boolean}  [darkness]     Should darkness be applied ("popout" or "fullscreen" modes)
+   * @property {boolean}  [sceneId]      Scene id bound to darkness ("popout" or "fullscreen" modes)
+   * @property {boolean}  [immersive]    Should immersive mode be applied ("fullscreen" mode)
+   * @property {boolean}  [loop]         Should the video be looped (video only)
+   * @property {boolean}  [mute]         should the video be muted (video only)
    */
 
   /**
@@ -285,31 +285,31 @@ export default class ShareablesManager {
   /* -------------------------------------------- */
 
   /**
-   * Handle region selection via the region selector dialog.
-   * Opens a region selection dialog and waits for user input.
+   * Handle area selection via the area selector dialog.
+   * Opens an area selection dialog and waits for user input.
    * @param {ShareablesOptions} context  Current pipeline context.
    * @returns {Promise<ShareablesOptions | null>}
    * @this {ShareablesManager}
    */
-  static async _handleRegionSelection(context) {
+  static async _handleAreaSelection(context) {
     // If no active scene, dont proceed
     if (!game.canvas) {
       ui.notifications.warn('An active scene is needed to share with "scene" mode!');
       return null;
     }
 
-    // If only one region is available, return it directly without opening the region selector
-    const availableRegions = game.modules.shareMedia.utils.getAvailableRegions();
-    if (availableRegions.length === 1) {
-      return { ...context, targetRegion: availableRegions[0].id };
+    // If only one area is available, return it directly without opening the area selector
+    const availableAreas = game.modules.shareMedia.utils.getAvailableAreas();
+    if (availableAreas.length === 1) {
+      return { ...context, targetArea: availableAreas[0].uuid };
     }
 
-    // Otherwise, open the region selector as usual
+    // Otherwise, open the area selector as usual
     const options = {};
-    if (context.targetRegion) options.targetRegion = context.targetRegion;
-    const targetRegion = await game.modules.shareMedia.shareables.apps.regionSelector.wait(options);
-    if (!targetRegion) return null;
-    return { ...context, targetRegion };
+    if (context.targetArea) options.targetArea = context.targetArea;
+    const targetArea = await game.modules.shareMedia.shareables.apps.areaSelector.wait(options);
+    if (!targetArea) return null;
+    return { ...context, targetArea };
   }
 
   /* -------------------------------------------- */
@@ -332,19 +332,16 @@ export default class ShareablesManager {
   /* -------------------------------------------- */
 
   /**
-   * Handle storing a flag on the selected region.
+   * Handle storing a flag on the selected area.
    * @param {ShareablesOptions} context  Current pipeline context.
    * @returns {Promise<ShareablesOptions | null>}
    * @this {ShareablesManager}
    */
-  static async _handleCreateRegionFlag(context) {
-    const { users: _users, mode: _mode, targetRegion, ...data } = context;
+  static async _handleCreateAreaFlag(context) {
+    const { users: _users, mode: _mode, targetArea, ...data } = context;
 
     // Await for the result
-    const result = await game.modules.shareMedia.canvas.layer.createRegionMediaData(
-      targetRegion,
-      data,
-    );
+    const result = await game.modules.shareMedia.canvas.layer.createAreaMediaData(targetArea, data);
 
     return result ? context : null;
   }

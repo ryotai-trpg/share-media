@@ -10,17 +10,17 @@ export default class Api {
 
   /**
    * Spawn a media sharing window allowing the user to share a media with the selected configuration.
-   * @param {string}  src                      Source URL of the media to share.
-   * @param {Object}  [settings]               Default settings to apply to the application form.
-   * @param {string}  [settings.mode]          Default sharing mode (options are: "popout", "fullscreen", "scene").
-   * @param {string}  [settings.optionName]    Default option name associated to the default mode.
-   * @param {string}  [settings.optionValue]   Default option value associated to the default mode.
-   * @param {string}  [settings.targetRegion]  Default region ID to display to ("scene" mode only).
-   * @param {boolean} [settings.caption]       Default caption option ("popout" and "fullscreen" modes only).
-   * @param {boolean} [settings.darkness]      Default darkness option ("popout" and "fullscreen" modes only).
-   * @param {boolean} [settings.immersive]     Default immersive option ("fullscreen" mode only).
-   * @param {boolean} [settings.loop]          Default video loop option (video only).
-   * @param {boolean} [settings.mute]          Default video mute option (video only).
+   * @param {string}  src                     Source URL of the media to share.
+   * @param {Object}  [settings]              Default settings to apply to the application form.
+   * @param {string}  [settings.mode]         Default sharing mode (options are: "popout", "fullscreen", "scene").
+   * @param {string}  [settings.optionName]   Default option name associated to the default mode.
+   * @param {string}  [settings.optionValue]  Default option value associated to the default mode.
+   * @param {string}  [settings.targetArea]   Default region or tile uuid to display to ("scene" mode only).
+   * @param {boolean} [settings.caption]      Default caption option ("popout" and "fullscreen" modes only).
+   * @param {boolean} [settings.darkness]     Default darkness option ("popout" and "fullscreen" modes only).
+   * @param {boolean} [settings.immersive]    Default immersive option ("fullscreen" mode only).
+   * @param {boolean} [settings.loop]         Default video loop option (video only).
+   * @param {boolean} [settings.mute]         Default video mute option (video only).
    * @returns {Promise<ShareSelector> | void}
    * @example
    *   // Share a simple image
@@ -230,11 +230,11 @@ export default class Api {
 
   /**
    * Share a media to the scene with "fit" mode.
-   * @param {Object}  options                 Options which may changed how the media is shared.
-   * @param {string}  options.src             Source URL of the media to share.
-   * @param {string}  [options.targetRegion]  Region ID to display to.
-   * @param {boolean} [options.loop]          Should the video be looped (video only)
-   * @param {boolean} [options.mute]          should the video be muted (video only)
+   * @param {Object}  options               Options which may changed how the media is shared.
+   * @param {string}  options.src           Source URL of the media to share.
+   * @param {string}  [options.targetArea]  Region or tile uuid to display to.
+   * @param {boolean} [options.loop]        Should the video be looped (video only)
+   * @param {boolean} [options.mute]        should the video be muted (video only)
    * @returns {Promise<boolean> | void}
    * @example
    *   // Share an image to scene with "fit" mode
@@ -246,7 +246,7 @@ export default class Api {
    *   // Share a looping video to a specific region in "fit" mode
    *   await game.modules.shareMedia.api.sceneFit({
    *     src: "https://foundry.vtt/video.mp4",
-   *     targetRegion: "region-id-123",
+   *     targetArea: "region-uuid-123",
    *     loop: true,
    *   });
    *
@@ -264,11 +264,11 @@ export default class Api {
 
   /**
    * Share a media to the scene with "fill" mode.
-   * @param {Object}  options                 Options which may changed how the media is shared.
-   * @param {string}  options.src             Source URL of the media to share.
-   * @param {string}  [options.targetRegion]  Region ID to display to.
-   * @param {boolean} [options.loop]          Should the video be looped (video only)
-   * @param {boolean} [options.mute]          should the video be muted (video only)
+   * @param {Object}  options               Options which may changed how the media is shared.
+   * @param {string}  options.src           Source URL of the media to share.
+   * @param {string}  [options.targetArea]  Region or tile uuid to display to.
+   * @param {boolean} [options.loop]        Should the video be looped (video only)
+   * @param {boolean} [options.mute]        should the video be muted (video only)
    * @returns {Promise<boolean> | void}
    * @example
    *   // Share an image to scene with "fill" mode

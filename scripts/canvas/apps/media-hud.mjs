@@ -55,7 +55,7 @@ export default class MediaHUD extends HandlebarsApplicationMixin(ApplicationV2) 
     const { sprite } = options;
     if (!sprite) return;
     this.#sprite = sprite;
-    this.constructor.lastSprite = this.#sprite.region.id;
+    this.constructor.lastSprite = this.#sprite.area.uuid;
   }
 
   /* -------------------------------------------- */
@@ -77,7 +77,7 @@ export default class MediaHUD extends HandlebarsApplicationMixin(ApplicationV2) 
    */
   _updatePosition(position) {
     const s = game.canvas.dimensions.uiScale;
-    const { x: left, y: top, width, height } = this.#sprite.frame.getLocalBounds();
+    const { x: left, y: top, width, height } = this.#sprite._frame.getLocalBounds();
     Object.assign(position, { left, top, width: width / s, height: height / s });
     position.scale = s;
     return position;
@@ -143,7 +143,7 @@ export default class MediaHUD extends HandlebarsApplicationMixin(ApplicationV2) 
    */
   static async #onSortMedia(_event, target) {
     const up = target.dataset.direction === "up";
-    await game.modules.shareMedia.canvas.layer.sendToBackOrBringToFront(this.#sprite.region.id, up);
+    await game.modules.shareMedia.canvas.layer.sendToBackOrBringToFront(this.#sprite.area.uuid, up);
   }
 
   /* -------------------------------------------- */
@@ -155,7 +155,7 @@ export default class MediaHUD extends HandlebarsApplicationMixin(ApplicationV2) 
    * @this {MediaHUD}
    */
   static #onClearMedia(_event, _target) {
-    game.modules.shareMedia.canvas.layer.deleteSprite(this.#sprite.region.id, { unsetFlag: true });
+    game.modules.shareMedia.canvas.layer.deleteSprite(this.#sprite.area.uuid, { unsetFlag: true });
   }
 
   /* -------------------------------------------- */

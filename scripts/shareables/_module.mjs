@@ -3,7 +3,7 @@ export * as apps from "./apps/_module.mjs";
 export * as mixins from "./mixins/_module.mjs";
 
 /**
- * Apply the needed modificcations to show tokens buttons and entities context entries.
+ * Apply the needed modifications to show token buttons and entity context entries.
  */
 export const applyEntitySharingSettings = () => {
   // Entity settings

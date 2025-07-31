@@ -59,6 +59,9 @@ Hooks.once("init", () => {
   // Register region behaviors
   CONFIG.shareMedia.canvas.registerRegionBehaviors();
 
+  //Register tile configuration
+  CONFIG.shareMedia.canvas.registerTileConfiguration();
+
   // Regiter media layer
   CONFIG.shareMedia.canvas.registerMediaLayer();
 
@@ -85,7 +88,9 @@ Hooks.once("setup", () => {
   module.ui.overlay = new config.ui.MediaOverlay.implementation();
 
   // Expose canvas
-  module.canvas.sprite = config.canvas.MediaSprite.implementation;
+  module.canvas.mediaSprite = config.canvas.MediaSprite.implementation;
+  module.canvas.regionSprite = config.canvas.RegionSprite.implementation;
+  module.canvas.tileSprite = config.canvas.TileSprite.implementation;
   module.canvas.apps.hud = config.canvas.apps.MediaHUD.implementation;
 
   // Expose layers
@@ -95,7 +100,7 @@ Hooks.once("setup", () => {
   // Expose shareables
   module.shareables.manager = new config.shareables.ShareablesManager.implementation();
   module.shareables.apps.userSelector = config.shareables.apps.UserSelector.implementation;
-  module.shareables.apps.regionSelector = config.shareables.apps.RegionSelector.implementation;
+  module.shareables.apps.areaSelector = config.shareables.apps.AreaSelector.implementation;
   module.shareables.apps.shareSelector = config.shareables.apps.ShareSelector.implementation;
 
   // Call shareMedia.setup Hook

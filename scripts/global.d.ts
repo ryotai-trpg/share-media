@@ -36,7 +36,9 @@ declare global {
     };
     const canvas: {
       layer: InstanceType<typeof CanvasModule.MediaLayer>;
-      sprite: typeof CanvasModule.MediaSprite;
+      mediaSprite: typeof CanvasModule.MediaSprite;
+      regionSprite: typeof CanvasModule.RegionSprite;
+      tileSprite: typeof CanvasModule.TileSprite;
       apps: {
         hud: typeof CanvasModule.apps.MediaHUD;
       };
@@ -49,7 +51,7 @@ declare global {
       manager: InstanceType<typeof ShareablesModule.ShareablesManager>;
       apps: {
         userSelector: typeof ShareablesModule.apps.UserSelector;
-        regionSelector: typeof ShareablesModule.apps.RegionSelector;
+        areaSelector: typeof ShareablesModule.apps.AreaSelector;
         shareSelector: typeof ShareablesModule.apps.ShareSelector;
       };
     };

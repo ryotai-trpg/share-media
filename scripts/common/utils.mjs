@@ -131,13 +131,16 @@ export const getMediaSettings = (src, mode, settings) => {
 /* -------------------------------------------- */
 
 /**
- * Get available region documents that have at least one "ShareRegionBehaviorType" behavior not disabled.
- * @returns {RegionDocument[]}
+ * Get available area documents.
+ * Regions must have at least one "ShareRegionBehaviorType" behavior not disabled.
+ * Tiles should have a specific flag enabled.
+ * @returns {Array<RegionDocument | TileDocument>}
  */
-export const getAvailableRegions = () => {
+export const getAvailableAreas = () => {
   if (!game.canvas) return [];
 
-  return game.canvas.regions.placeables
+  // Filter regions on the current scene
+  const regions = game.canvas.regions.placeables
     .filter(
       (region) =>
         region.document.shapes.length > 0 &&
@@ -148,4 +151,16 @@ export const getAvailableRegions = () => {
         ),
     )
     .map((region) => region.document);
+
+  // Filters tiles on the current scene
+  const tiles = game.canvas.tiles.placeables
+    .filter((tile) =>
+      tile.document.getFlag(
+        "share-media",
+        game.modules.shareMedia.canvas.layer.constructor.MEDIA_TILE_ENABLED,
+      ),
+    )
+    .map((tile) => tile.document);
+
+  return [...regions, ...tiles];
 };

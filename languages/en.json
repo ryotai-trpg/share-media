@@ -101,6 +101,15 @@
       "tool": {
         "label": "Toggle Media Layer",
         "zero": "No media shared on the current scene, share media on the scene before activating the media layer."
+      },
+
+      "tile": {
+        "label": "Share Media Configuration",
+        "enabled.label": "Share Media Tile",
+        "enabled.hint": "Enable this tile as a boundary for scene media sharing.",
+        "name.label": "Tile Name",
+        "name.hint": "Tile identifier to easily identify which tile you are selecting for scene sharing.",
+        "name.default": "Share Media Tile"
       }
     },
 
@@ -108,10 +117,10 @@
       "entities.label": "Share this Media",
       "entities.contextmenu": "(right-click to share the sheet media)",
 
-      "region": {
-        "label": "Region Selector",
-        "description": "Choose a region from the list. Hover to preview the area, then select your preferred region.",
-        "zero": "No Share Media regions detected. You must create at least one Scene Region with <strong>at least one shape</strong> and with at least one <strong>enabled</strong> behavior type: \"{type}\" <strong>on the current scene</strong>."
+      "area": {
+        "label": "Area Selector",
+        "description": "Choose an area from the list. Hover to preview the area, then select your preferred area.",
+        "zero": "No Share Media areas detected.<br><br><strong><u>Region</u></strong>: you must create at least one Scene Region with <strong>at least one shape</strong> and with at least one <strong>enabled</strong> behavior type: \"{type}\" <strong>on the current scene</strong>.<br><br><strong><u>Tile</u></strong>: you must create <strong>at least one tile</strong> with Share Media enabled <strong>on the current scene</strong>."
       },
 
       "user": {

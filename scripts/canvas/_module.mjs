@@ -1,5 +1,7 @@
 export { default as MediaLayer } from "./media-layer.mjs";
 export { default as MediaSprite } from "./media-sprite.mjs";
+export { default as RegionSprite } from "./region-sprite.mjs";
+export { default as TileSprite } from "./tile-sprite.mjs";
 export { default as ShareRegionBehaviorType } from "./share-region-behavior.mjs";
 export * as apps from "./apps/_module.mjs";
 
@@ -15,6 +17,74 @@ export const registerRegionBehaviors = () => {
     shareRegionBehaviorType.implementation;
   // Register the behavior icon
   CONFIG.RegionBehavior.typeIcons[shareRegionBehaviorType.type] = config.CONST.ICONS.sceneFit;
+};
+
+/**
+ * Register the needed tile configuration.
+ */
+export const registerTileConfiguration = () => {
+  Hooks.on("renderTileConfig", (application, element, _context, _option) => {
+    if (!game.users.current.isGM) return;
+
+    // Get current values
+    const enabled =
+      application.document.getFlag(
+        "share-media",
+        game.modules.shareMedia.canvas.layer.constructor.MEDIA_TILE_ENABLED,
+      ) ?? false;
+
+    const name =
+      application.document.getFlag(
+        "share-media",
+        game.modules.shareMedia.canvas.layer.constructor.MEDIA_TILE_NAME,
+      ) || game.i18n.localize("share-media.canvas.layer.tile.name.default");
+
+    // HTML to insert
+    const html = `
+      <fieldset>
+        <legend>${game.i18n.localize("share-media.canvas.layer.tile.label")}</legend>
+        <div class="form-group">
+          <label for="shm.enabled">${game.i18n.localize("share-media.canvas.layer.tile.enabled.label")}</label>
+          <div class="shm form-fields">
+            <input type="checkbox" name="shm.enabled" id="shm.enabled" ${enabled ? "checked" : ""}>
+          </div>
+          <p class="hint">${game.i18n.localize("share-media.canvas.layer.tile.enabled.hint")}</p>
+        </div>
+        <div class="form-group">
+          <label for="shm.name">${game.i18n.localize("share-media.canvas.layer.tile.name.label")}</label>
+          <div class="form-fields">
+            <input type="text" name="shm.name" id="shm.name" value="${name}">
+          </div>
+          <p class="hint">${game.i18n.localize("share-media.canvas.layer.tile.name.hint")}</p>
+        </div>
+      </fieldset>
+    `;
+
+    // Get the tab and insert
+    const tab = element.querySelector('.tab[data-tab="appearance"]');
+    if (!tab) return;
+    tab.insertAdjacentHTML("beforeend", html);
+
+    // Submit handler
+    element.addEventListener("submit", async (event) => {
+      // Get the data
+      const formData = new foundry.applications.ux.FormDataExtended(event.target);
+      const object = foundry.utils.expandObject(formData.object);
+
+      // Update flags
+      await application.document.setFlag(
+        "share-media",
+        game.modules.shareMedia.canvas.layer.constructor.MEDIA_TILE_ENABLED,
+        object.shm.enabled,
+      );
+
+      await application.document.setFlag(
+        "share-media",
+        game.modules.shareMedia.canvas.layer.constructor.MEDIA_TILE_NAME,
+        object.shm.name,
+      );
+    });
+  });
 };
 
 /**
