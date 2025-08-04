@@ -1,4 +1,5 @@
 import MediaSprite from "./media-sprite.mjs";
+const { isSubclass } = foundry.utils;
 
 /**
  * A class responsible for generating a sprite in a tile area.
