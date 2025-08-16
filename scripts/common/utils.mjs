@@ -36,7 +36,9 @@ export const nextAnimationFrames = async (count = 1) => {
  */
 export const getMediaSource = (element) => {
   if (!["IMG", "VIDEO"].includes(element?.tagName)) return null;
-  return element.src || element.querySelector("source[src]")?.src || null;
+  return (
+    element.getAttribute("src") || element.querySelector("source[src]")?.getAttribute("src") || null
+  );
 };
 
 /* -------------------------------------------- */

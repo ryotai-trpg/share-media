@@ -4,7 +4,6 @@ const { isSubclass } = foundry.utils;
  * Class responsible for handling and dispatching media actions.
  */
 export default class ShareablesManager {
-  /** @inheritdoc */
   constructor() {
     if (game.modules.shareMedia.shareables.manager)
       throw new Error("You may not re-construct the singleton ShareablesManager.");
