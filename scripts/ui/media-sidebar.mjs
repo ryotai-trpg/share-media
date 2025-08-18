@@ -47,6 +47,7 @@ export default class MediaSidebar extends HandlebarsApplicationMixin(AbstractSid
       },
     },
     actions: {
+      shareLink: MediaSidebar.#onShareLink,
       clearHistory: MediaSidebar.#onClearHistory,
       clearMedia: MediaSidebar.#onClearMedia,
       showMedia: MediaSidebar.#onShowMedia,
@@ -520,6 +521,21 @@ export default class MediaSidebar extends HandlebarsApplicationMixin(AbstractSid
   /* -------------------------------------------- */
 
   /**
+   * Handle sharing a media via a link.
+   * @param {PointerEvent} _event   The triggering event.
+   * @param {HTMLElement}  _target  The targeted DOM element.
+   * @returns {Promise<void>}
+   * @this {MediaSidebar}
+   */
+  static async #onShareLink(_event, _target) {
+    await new game.modules.shareMedia.shareables.apps.shareSelector({ link: true }).render({
+      force: true,
+    });
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Handle clearing the media history.
    * @param {PointerEvent} _event   The triggering event.
    * @param {HTMLElement}  _target  The targeted DOM element.
@@ -534,7 +550,7 @@ export default class MediaSidebar extends HandlebarsApplicationMixin(AbstractSid
         title: "share-media.ui.sidebar.label",
         icon: CONFIG.shareMedia.CONST.ICONS.clear,
       },
-      content: `<p>${game.i18n.localize("share-media.ui.sidebar.clear.history.description")}</p>`,
+      content: `<p>${game.i18n.localize("share-media.ui.sidebar.header.clear.description")}</p>`,
     });
 
     // Proceed only if confirmed

@@ -1,5 +1,5 @@
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
-const { isSubclass } = foundry.utils;
+const { isSubclass, debounce } = foundry.utils;
 
 /**
  * Application responsible for selecting a share mode with options.
@@ -12,7 +12,7 @@ const { isSubclass } = foundry.utils;
 export default class ShareSelector extends HandlebarsApplicationMixin(ApplicationV2) {
   /** @inheritdoc */
   constructor(options = {}) {
-    if (!options.src || typeof options.src !== "string")
+    if (!options.link && (!options.src || typeof options.src !== "string"))
       throw new Error(
         'You may note create a ShareSelector application without or with a malformated "options.src" option.',
       );
@@ -34,6 +34,7 @@ export default class ShareSelector extends HandlebarsApplicationMixin(Applicatio
     position: {
       width: 450,
       height: "auto",
+      top: 100,
     },
     form: {
       handler: ShareSelector.#onSubmit,
@@ -45,13 +46,15 @@ export default class ShareSelector extends HandlebarsApplicationMixin(Applicatio
 
     // Share selector specific options
     src: null,
+    link: false,
     settings: {},
   };
 
   /** @override */
   static PARTS = {
+    link: { template: "modules/share-media/templates/shareables/share-selector-link.hbs" },
     media: { template: "modules/share-media/templates/partials/media.hbs" },
-    form: { template: "modules/share-media/templates/shareables/share-selector.hbs" },
+    form: { template: "modules/share-media/templates/shareables/share-selector-form.hbs" },
   };
 
   /**
@@ -65,6 +68,7 @@ export default class ShareSelector extends HandlebarsApplicationMixin(Applicatio
    * }}
    */
   #shareOptions = {
+    src: null,
     mode: null,
     optionName: null,
     optionValue: null,
@@ -73,22 +77,45 @@ export default class ShareSelector extends HandlebarsApplicationMixin(Applicatio
     ),
   };
 
+  /**
+   * Media link input reference.
+   * @type {HTMLInputElement | null}
+   */
+  #linkElement = null;
+
+  /**
+   * Media link listener.
+   * @type {() => void | null}
+   */
+  #linkListener = null;
+
   /* -------------------------------------------- */
   /*  Context
   /* -------------------------------------------- */
 
   /**
    * Assign default options if they exists (only on the first render).
+   * Only render media part if link is not "true".
    * @inheritdoc
    */
   _configureRenderOptions(options) {
     super._configureRenderOptions(options);
-    if (options.isFirstRender)
+    if (options.isFirstRender) {
+      // Render specific view depending on options
+      if (this.options.link && !this.options.src) options.parts = ["link"];
+      else options.parts = ["media", "form"];
+
+      // Apply settings
+      this.#shareOptions.src = this.options.src || null;
       game.modules.shareMedia.utils.applySettingsToMediaOptions(
         this.options.settings.mode,
         this.#shareOptions,
         this.options.settings,
       );
+    }
+
+    // Retrieve any new src value
+    if (options.src) this.#shareOptions.src = options.src;
   }
 
   /* -------------------------------------------- */
@@ -107,8 +134,8 @@ export default class ShareSelector extends HandlebarsApplicationMixin(Applicatio
   async _preparePartContext(partId, context, _options) {
     switch (partId) {
       case "media":
-        context.src = this.options.src;
-        context.isVideo = game.modules.shareMedia.utils.isVideo(this.options.src);
+        context.src = this.#shareOptions.src;
+        context.isVideo = game.modules.shareMedia.utils.isVideo(this.#shareOptions.src);
         if (context.isVideo) context.videoIcon = CONFIG.shareMedia.CONST.ICONS.play;
         if (context.isVideo) context.metadata = true;
         break;
@@ -179,7 +206,7 @@ export default class ShareSelector extends HandlebarsApplicationMixin(Applicatio
       const validator = CONFIG.shareMedia.CONST.MEDIA_SETTINGS_VALIDATORS[category];
       if (!validator) throw new Error(`Missing validator for setting "${category}".`);
       const isVisible =
-        validator(this.options.src) &&
+        validator(this.#shareOptions.src) &&
         (category === this.#shareOptions.mode ||
           !Object.hasOwn(CONFIG.shareMedia.CONST.LAYERS_MODES, category));
 
@@ -199,6 +226,46 @@ export default class ShareSelector extends HandlebarsApplicationMixin(Applicatio
 
       return acc;
     }, {});
+  }
+
+  /* -------------------------------------------- */
+  /*  Rendering
+  /* -------------------------------------------- */
+
+  /**
+   * Store convenient element references.
+   * @inheritdoc
+   */
+  async _onRender(context, options) {
+    await super._onRender(context, options);
+    if (this.options.link) this.#linkElement = this.element.querySelector("#link");
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Attach link listener.
+   * @inheritdoc
+   */
+  async _postRender(context, options) {
+    await super._postRender(context, options);
+    if (this.options.link) {
+      this.#linkListener = debounce(this.#parseMediaLink.bind(this), 300);
+      this.#linkElement.addEventListener("input", this.#linkListener);
+    }
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Clean up references.
+   * @inheritdoc
+   */
+  async _onClose(options) {
+    super._onClose(options);
+    if (this.#linkListener) this.#linkElement.removeEventListener("input", this.#linkListener);
+    this.#linkListener = null;
+    this.#linkElement = null;
   }
 
   /* -------------------------------------------- */
@@ -260,7 +327,7 @@ export default class ShareSelector extends HandlebarsApplicationMixin(Applicatio
 
     // Get the settings for the selected mode
     const optionsSettings = game.modules.shareMedia.utils.getMediaSettings(
-      this.options.src,
+      this.#shareOptions.src,
       this.#shareOptions.mode,
       this.#shareOptions.settings,
     );
@@ -268,7 +335,7 @@ export default class ShareSelector extends HandlebarsApplicationMixin(Applicatio
     // Build the media options
     const { settings: _settings, ...shareOptions } = this.#shareOptions;
     const options = {
-      src: this.options.src,
+      src: this.#shareOptions.src,
       ...shareOptions,
       ...optionsSettings,
     };
@@ -277,6 +344,29 @@ export default class ShareSelector extends HandlebarsApplicationMixin(Applicatio
     const result = await game.modules.shareMedia.shareables.manager.dispatch(options);
     if (result) this.close();
     return result;
+  }
+
+  /* -------------------------------------------- */
+  /*  Other Event Handlers
+  /* -------------------------------------------- */
+
+  /**
+   * Handle the typing in the link field.
+   * @param {InputEvent} event  The input change event.
+   */
+  #parseMediaLink(event) {
+    // Field value
+    const value = event.target.value;
+
+    // Validate the url, returning if not a valid url
+    try {
+      new URL(value);
+    } catch (_error) {
+      return;
+    }
+
+    // Render this application again with the media link as the src value
+    this.render({ parts: ["media", "form"], src: value, force: true });
   }
 
   /* -------------------------------------------- */

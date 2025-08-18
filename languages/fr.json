@@ -72,14 +72,20 @@
       "label": "Historique des médias",
       "loading": "Chargement des médias précédents",
 
+      "header": {
+        "link": {
+          "label": "Partager un lien"
+        },
+
+        "clear": {
+          "label": "Effacer l'historique",
+          "description": "<strong>Êtes-vous sûr ?</strong> Tous les médias de l'historique seront définitivement supprimés."
+        }
+      },
+
       "gm-actions": {
         "targetUsers.no-players": "Non partagé avec les joueurs",
         "share": "Partager à nouveau"
-      },
-
-      "clear": {
-        "history.label": "Effacer l'historique",
-        "history.description": "<strong>Êtes-vous sûr ?</strong> Tous les médias de l'historique seront définitivement supprimés."
       }
     },
 
@@ -106,9 +112,9 @@
       "tile": {
         "label": "Configuration Share Media ",
         "enabled.label": "Tuile Share Media",
-        "enabled.hint": "Activer cette tuile comme zone d'affichage pour le partage de médias sur la scène.",
+        "enabled.description": "Activer cette tuile comme zone d'affichage pour le partage de médias sur la scène.",
         "name.label": "Nom de la tuile",
-        "name.hint": "Identifiant de la tuile pour identifier facilement quelle tuile vous sélectionnez pour le partage sur la scène.",
+        "name.description": "Identifiant de la tuile pour identifier facilement quelle tuile vous sélectionnez pour le partage sur la scène.",
         "name.default": "Tuile Share Media"
       }
     },
@@ -131,6 +137,11 @@
       "share": {
         "label": "Sélecteur de partage",
         "description": "Choisissez comment partager ce média et configurez les paramètres pour votre méthode de partage sélectionnée. Cliquez sur valider quand vous êtes prêt à partager.",
+
+        "link": {
+          "label": "Lien média",
+          "description": "Remplissez le champ avec une URL valide d'un média."
+        },
 
         "mode": {
           "label": "Méthode de partage"

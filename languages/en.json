@@ -72,14 +72,20 @@
       "label": "Media History",
       "loading": "Loading previous media",
 
+      "header": {
+        "link": {
+          "label": "Share link"
+        },
+
+        "clear": {
+          "label": "Clear history",
+          "description": "<strong>Are You Sure?</strong> All media within the media history log will be permanently deleted."
+        }
+      },
+
       "gm-actions": {
         "targetUsers.no-players": "Not shared with any players",
         "share": "Share this again"
-      },
-
-      "clear": {
-        "history.label": "Clear history",
-        "history.description": "<strong>Are You Sure?</strong> All media within the media history log will be permanently deleted."
       }
     },
 
@@ -106,9 +112,9 @@
       "tile": {
         "label": "Share Media Configuration",
         "enabled.label": "Share Media Tile",
-        "enabled.hint": "Enable this tile as a boundary for scene media sharing.",
+        "enabled.description": "Enable this tile as a boundary for scene media sharing.",
         "name.label": "Tile Name",
-        "name.hint": "Tile identifier to easily identify which tile you are selecting for scene sharing.",
+        "name.description": "Tile identifier to easily identify which tile you are selecting for scene sharing.",
         "name.default": "Share Media Tile"
       }
     },
@@ -131,6 +137,11 @@
       "share": {
         "label": "Share Selector",
         "description": "Choose how to share this media and configure the settings for your selected sharing method. Click validate when ready to share.",
+
+        "link": {
+          "label": "Media link",
+          "description": "Fill in the field with a valid media URL."
+        },
 
         "mode": {
           "label": "Sharing method"

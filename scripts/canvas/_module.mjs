@@ -48,14 +48,14 @@ export const registerTileConfiguration = () => {
           <div class="shm form-fields">
             <input type="checkbox" name="shm.enabled" id="shm.enabled" ${enabled ? "checked" : ""}>
           </div>
-          <p class="hint">${game.i18n.localize("share-media.canvas.layer.tile.enabled.hint")}</p>
+          <p class="hint">${game.i18n.localize("share-media.canvas.layer.tile.enabled.description")}</p>
         </div>
         <div class="form-group">
           <label for="shm.name">${game.i18n.localize("share-media.canvas.layer.tile.name.label")}</label>
           <div class="form-fields">
             <input type="text" name="shm.name" id="shm.name" value="${name}">
           </div>
-          <p class="hint">${game.i18n.localize("share-media.canvas.layer.tile.name.hint")}</p>
+          <p class="hint">${game.i18n.localize("share-media.canvas.layer.tile.name.description")}</p>
         </div>
       </fieldset>
     `;

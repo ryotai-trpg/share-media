@@ -219,5 +219,6 @@ export const ICONS = {
   usersInfo: "fas fa-user",
   noUsers: "fas fa-user-slash",
   shareAgain: "fas fa-share",
+  shareLink: "fas fa-link",
   mediaLayer: "fas fa-images",
 };

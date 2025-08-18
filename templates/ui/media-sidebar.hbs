@@ -3,9 +3,18 @@
     {{#if user.isGM}}
         <header class="directory-header flexcol">
             <div class="header-actions action-buttons flexrow">
+
+                {{!--  Share Media Link Button  --}}
+                <button type="button" data-action="shareLink">
+                    <i class="{{icons.shareLink}}"></i>
+                    <span>{{localize "share-media.ui.sidebar.header.link.label"}}</span>
+                </button>
+
+
+                {{!--  Clear History Button  --}}
                 <button type="button" data-action="clearHistory">
                     <i class="{{icons.clear}}"></i>
-                    <span>{{localize "share-media.ui.sidebar.clear.history.label"}}</span>
+                    <span>{{localize "share-media.ui.sidebar.header.clear.label"}}</span>
                 </button>
             </div>
         </header>
