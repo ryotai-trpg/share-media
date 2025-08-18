@@ -26,34 +26,31 @@ export const registerTileConfiguration = () => {
   Hooks.on("renderTileConfig", (application, element, _context, _option) => {
     if (!game.users.current.isGM) return;
 
-    // Get current values
-    const enabled =
-      application.document.getFlag(
-        "share-media",
-        game.modules.shareMedia.canvas.layer.constructor.MEDIA_TILE_ENABLED,
-      ) ?? false;
+    // Static flag names
+    const { MEDIA_TILE_ENABLED, MEDIA_TILE_NAME } =
+      game.modules.shareMedia.canvas.layer.constructor;
 
+    // Get current values
+    const enabled = application.document.getFlag("share-media", MEDIA_TILE_ENABLED) ?? false;
     const name =
-      application.document.getFlag(
-        "share-media",
-        game.modules.shareMedia.canvas.layer.constructor.MEDIA_TILE_NAME,
-      ) || game.i18n.localize("share-media.canvas.layer.tile.name.default");
+      application.document.getFlag("share-media", MEDIA_TILE_NAME) ||
+      game.i18n.localize("share-media.canvas.layer.tile.name.default");
 
     // HTML to insert
     const html = `
       <fieldset>
         <legend>${game.i18n.localize("share-media.canvas.layer.tile.label")}</legend>
         <div class="form-group">
-          <label for="shm.enabled">${game.i18n.localize("share-media.canvas.layer.tile.enabled.label")}</label>
+          <label for="flags.share-media.${MEDIA_TILE_ENABLED}">${game.i18n.localize("share-media.canvas.layer.tile.enabled.label")}</label>
           <div class="shm form-fields">
-            <input type="checkbox" name="shm.enabled" id="shm.enabled" ${enabled ? "checked" : ""}>
+            <input type="checkbox" name="flags.share-media.${MEDIA_TILE_ENABLED}" id="flags.share-media.${MEDIA_TILE_ENABLED}" ${enabled ? "checked" : ""}>
           </div>
           <p class="hint">${game.i18n.localize("share-media.canvas.layer.tile.enabled.description")}</p>
         </div>
         <div class="form-group">
-          <label for="shm.name">${game.i18n.localize("share-media.canvas.layer.tile.name.label")}</label>
+          <label for="flags.share-media.${MEDIA_TILE_NAME}">${game.i18n.localize("share-media.canvas.layer.tile.name.label")}</label>
           <div class="form-fields">
-            <input type="text" name="shm.name" id="shm.name" value="${name}">
+            <input type="text" name="flags.share-media.${MEDIA_TILE_NAME}" id="flags.share-media.${MEDIA_TILE_NAME}" value="${name}">
           </div>
           <p class="hint">${game.i18n.localize("share-media.canvas.layer.tile.name.description")}</p>
         </div>
@@ -64,26 +61,6 @@ export const registerTileConfiguration = () => {
     const tab = element.querySelector('.tab[data-tab="appearance"]');
     if (!tab) return;
     tab.insertAdjacentHTML("beforeend", html);
-
-    // Submit handler
-    element.addEventListener("submit", async (event) => {
-      // Get the data
-      const formData = new foundry.applications.ux.FormDataExtended(event.target);
-      const object = foundry.utils.expandObject(formData.object);
-
-      // Update flags
-      await application.document.setFlag(
-        "share-media",
-        game.modules.shareMedia.canvas.layer.constructor.MEDIA_TILE_ENABLED,
-        object.shm.enabled,
-      );
-
-      await application.document.setFlag(
-        "share-media",
-        game.modules.shareMedia.canvas.layer.constructor.MEDIA_TILE_NAME,
-        object.shm.name,
-      );
-    });
   });
 };
 
