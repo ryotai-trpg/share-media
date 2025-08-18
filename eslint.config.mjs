@@ -30,7 +30,13 @@ export default [
       // Also keep vars with the same pattern, thus allowing array destructuring
       "no-unused-vars": [
         "warn",
-        { vars: "all", args: "all", argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+        {
+          vars: "all",
+          args: "all",
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
       ],
 
       // Do not force return description
